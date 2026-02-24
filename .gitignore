@@ -398,6 +398,14 @@ FodyWeavers.xsd
 
 # VS Code files for those working on multiple tools
 .vscode/*
+
+# EF Core migrations
+**/Migrations/
+
+# SQLite database files
+**/*.db
+**/*.db-shm
+**/*.db-wal
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
