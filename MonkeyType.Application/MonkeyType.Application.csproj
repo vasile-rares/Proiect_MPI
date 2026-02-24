@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MonkeyType.Domain\MonkeyType.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
