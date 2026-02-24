@@ -13,7 +13,6 @@ namespace MonkeyType.Domain.Entities
         public int ExtraCharacters { get; set; }
         public int MissedCharacters { get; set; }
         public int DurationInSeconds { get; set; }
-        public string Type { get; set; }
         public string Mode { get; set; }
         public DateTime CreatedAt { get; set; }
 

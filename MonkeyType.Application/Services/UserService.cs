@@ -1,6 +1,7 @@
 using MonkeyType.Domain.Entities;
 using MonkeyType.Domain.IRepositories;
 using MonkeyType.Application.IServices;
+using MonkeyType.Shared.DTOs.Responses.User;
 
 namespace MonkeyType.Application.Services
 {
@@ -13,14 +14,32 @@ namespace MonkeyType.Application.Services
             _userRepository = userRepository;
         }
 
-        public async Task<User?> GetByIdAsync(Guid id)
+        public async Task<UserResponseDTO?> GetByIdAsync(Guid id)
         {
-            return await _userRepository.GetByIdAsync(id);
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null)
+            {
+                return null;
+            }
+
+            return new UserResponseDTO
+            {
+                Username = user.Username,
+                Email = user.Email,
+                TestsStarted = user.TestsStarted,
+                TestsCompleted = user.TestsCompleted,
+                Biography = user.Biography
+            };
         }
 
         public async Task<User?> GetByUsernameAsync(string username)
         {
             return await _userRepository.GetByUsernameAsync(username);
+        }
+
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            return await _userRepository.GetByEmailAsync(email);
         }
 
         public async Task AddAsync(User user)

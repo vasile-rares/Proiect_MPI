@@ -21,15 +21,13 @@ public class MonkeyTypeDatabaseContext : DbContext
 		{
 			entity.HasKey(user => user.Id);
 			entity.Property(user => user.Username).IsRequired();
+            entity.Property(user => user.Email).IsRequired();
 			entity.Property(user => user.PasswordHash).IsRequired();
-			entity.Property(user => user.EmailConfirmationToken).IsRequired();
 		});
 
 		modelBuilder.Entity<StatisticsGame>(entity =>
 		{
 			entity.HasKey(statisticsGame => statisticsGame.Id);
-			entity.Property(statisticsGame => statisticsGame.Type).IsRequired();
-			entity.Property(statisticsGame => statisticsGame.Mode).IsRequired();
 
 			entity.HasOne<User>()
 				.WithMany()
