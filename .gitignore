@@ -426,3 +426,9 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+/MonkeyType.db
+/MonkeyType.db-shm
+/MonkeyType.db-wal
+
+/Migrations/

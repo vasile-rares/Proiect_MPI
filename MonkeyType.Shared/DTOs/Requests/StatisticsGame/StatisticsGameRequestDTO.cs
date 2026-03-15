@@ -1,8 +1,7 @@
-namespace MonkeyType.Domain.Entities
+namespace MonkeyType.Shared.DTOs.Requests.StatisticsGame
 {
-    public class StatisticsGame
+    public class StatisticsGameRequestDTO
     {
-        public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public decimal WordsPerMinute { get; set; }
         public decimal RawWordsPerMinute { get; set; }
@@ -14,8 +13,5 @@ namespace MonkeyType.Domain.Entities
         public int MissedCharacters { get; set; }
         public int DurationInSeconds { get; set; }
         public string Mode { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-
-        public User User { get; set; } = null!;
     }
 }

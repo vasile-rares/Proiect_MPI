@@ -2,10 +2,6 @@ using MonkeyType.Application.IServices;
 using MonkeyType.Shared.DTOs.Requests.User;
 using MonkeyType.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace MonkeyType.API.Controllers
 {
@@ -30,6 +26,18 @@ namespace MonkeyType.API.Controllers
             _jwtService = jwtService;
         }
 
+        private bool ValidatePassword(string password)
+        {
+            if (password.Length < 8)
+                return false;
+
+            if (!password.Any(char.IsUpper) || !password.Any(char.IsLower) ||
+                !password.Any(char.IsDigit) || !password.Any(ch => !char.IsLetterOrDigit(ch)))
+                return false;
+
+            return true;
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDTO request)
         {
@@ -37,6 +45,11 @@ namespace MonkeyType.API.Controllers
             string.IsNullOrEmpty(request.Email))
             {
                 return BadRequest("Username, password, and email are required.");
+            }
+
+            if(!ValidatePassword(request.Password))
+            {
+                return BadRequest("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit and one special character.");
             }
 
             if (request.Password != request.VerifyPassword)
@@ -47,17 +60,6 @@ namespace MonkeyType.API.Controllers
             if (request.Email != request.VerifyEmail)
             {
                 return BadRequest("Emails do not match.");
-            }
-
-            if(request.Password.Length < 8)
-            {
-                return BadRequest("Password must be at least 8 characters long.");
-            }
-
-            if(!request.Password.Any(char.IsUpper) || !request.Password.Any(char.IsLower) || 
-            !request.Password.Any(char.IsDigit) || !request.Password.Any(ch => !char.IsLetterOrDigit(ch)))
-            {
-                return BadRequest("Password must contain at least one uppercase letter, one lowercase letter, one digit and one special character.");
             }
 
             if(request.Username.Length < 3)
@@ -129,12 +131,6 @@ namespace MonkeyType.API.Controllers
                 token,
                 expiresAt
             });
-        }
-
-        [HttpPost("logout")]
-        public IActionResult Logout()
-        {
-            return Ok(new { message = "Logout successful." });
         }
     }
 }

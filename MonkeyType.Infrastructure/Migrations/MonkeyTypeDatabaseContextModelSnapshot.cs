@@ -69,6 +69,8 @@ namespace MonkeyType.Infrastructure.Migrations
 
                     b.HasIndex("UserId1");
 
+                    b.HasIndex("CreatedAt", "DurationInSeconds", "UserId");
+
                     b.ToTable("StatisticsGames");
                 });
 

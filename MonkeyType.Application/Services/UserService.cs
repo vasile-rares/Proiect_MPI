@@ -2,6 +2,7 @@ using MonkeyType.Domain.Entities;
 using MonkeyType.Domain.IRepositories;
 using MonkeyType.Application.IServices;
 using MonkeyType.Shared.DTOs.Responses.User;
+using MonkeyType.Shared.DTOs.Requests.User;
 
 namespace MonkeyType.Application.Services
 {
@@ -47,14 +48,35 @@ namespace MonkeyType.Application.Services
             await _userRepository.AddAsync(user);
         }
 
-        public async Task UpdateAsync(User user)
+        public async Task UpdateAsync(UserUpdateRequestDTO existingUser)
         {
+            var user = await _userRepository.GetByUsernameAsync(existingUser.Username);
+            if (user == null)
+            {
+                return;
+            }
+
+            user.Username = existingUser.Username;
+            user.Email = existingUser.Email;
+            user.TestsStarted = existingUser.TestsStarted;
+            user.TestsCompleted = existingUser.TestsCompleted;
+            user.Biography = existingUser.Biography;
+            user.UpdatedAt = DateTime.UtcNow;
+
             await _userRepository.UpdateAsync(user);
         }
 
-        public async Task DeleteAsync(User user)
+        public async Task DeleteAsync(UserResponseDTO user)
         {
-            await _userRepository.DeleteAsync(user);
+            var userEntity = await _userRepository.GetByUsernameAsync(user.Username);
+            if (userEntity == null)
+            {
+                return;
+            }
+
+            userEntity.DeletedAt = DateTime.UtcNow;
+
+            await _userRepository.UpdateAsync(userEntity);
         }
     }
 }

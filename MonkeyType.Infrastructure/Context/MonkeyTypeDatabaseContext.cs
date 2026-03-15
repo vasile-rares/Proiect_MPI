@@ -29,6 +29,9 @@ public class MonkeyTypeDatabaseContext : DbContext
 		{
 			entity.HasKey(statisticsGame => statisticsGame.Id);
 
+			// Index to speed up leaderboard queries by date, duration, and user
+			entity.HasIndex(statisticsGame => new { statisticsGame.CreatedAt, statisticsGame.DurationInSeconds, statisticsGame.UserId });
+
 			entity.HasOne<User>()
 				.WithMany()
 				.HasForeignKey(statisticsGame => statisticsGame.UserId)
