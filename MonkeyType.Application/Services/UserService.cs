@@ -48,12 +48,12 @@ namespace MonkeyType.Application.Services
             await _userRepository.AddAsync(user);
         }
 
-        public async Task UpdateAsync(UserUpdateRequestDTO existingUser)
+        public async Task<bool> UpdateAsync(Guid id, UserUpdateRequestDTO existingUser)
         {
-            var user = await _userRepository.GetByUsernameAsync(existingUser.Username);
+            var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
             {
-                return;
+                return false;
             }
 
             user.Username = existingUser.Username;
@@ -64,19 +64,21 @@ namespace MonkeyType.Application.Services
             user.UpdatedAt = DateTime.UtcNow;
 
             await _userRepository.UpdateAsync(user);
+            return true;
         }
 
-        public async Task DeleteAsync(UserResponseDTO user)
+        public async Task<bool> DeleteAsync(Guid id)
         {
-            var userEntity = await _userRepository.GetByUsernameAsync(user.Username);
+            var userEntity = await _userRepository.GetByIdAsync(id);
             if (userEntity == null)
             {
-                return;
+                return false;
             }
 
             userEntity.DeletedAt = DateTime.UtcNow;
 
             await _userRepository.UpdateAsync(userEntity);
+            return true;
         }
     }
 }

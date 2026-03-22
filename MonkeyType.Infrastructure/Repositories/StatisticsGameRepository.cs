@@ -17,7 +17,31 @@ namespace MonkeyType.Infrastructure.Repositories
 
         public async Task<IEnumerable<StatisticsGame>?> GetAllAsync()
         {
-            return await _context.StatisticsGames.ToListAsync();
+            return await _context.StatisticsGames
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<PagedResult<StatisticsGame>> GetPagedAsync(int pageNumber, int pageSize)
+        {
+            var query = _context.StatisticsGames
+                .AsNoTracking()
+                .OrderByDescending(sg => sg.CreatedAt);
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<StatisticsGame>
+            {
+                Items = items,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task AddAsync(StatisticsGame statisticsGame)
@@ -28,12 +52,40 @@ namespace MonkeyType.Infrastructure.Repositories
 
         public async Task<IEnumerable<StatisticsGame>?> GetByUserIdAsync(Guid userId)
         {
-            return await _context.StatisticsGames.Where(sg => sg.UserId == userId).ToListAsync();
+            return await _context.StatisticsGames
+                .AsNoTracking()
+                .Where(sg => sg.UserId == userId)
+                .ToListAsync();
+        }
+
+        public async Task<PagedResult<StatisticsGame>> GetByUserIdPagedAsync(Guid userId, int pageNumber, int pageSize)
+        {
+            var query = _context.StatisticsGames
+                .AsNoTracking()
+                .Where(sg => sg.UserId == userId)
+                .OrderByDescending(sg => sg.CreatedAt);
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<StatisticsGame>
+            {
+                Items = items,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<StatisticsGame?> GetByIdAsync(Guid id)
         {
-            return await _context.StatisticsGames.FindAsync(id);
+            return await _context.StatisticsGames
+                .AsNoTracking()
+                .FirstOrDefaultAsync(sg => sg.Id == id);
         }
 
         public async Task<IEnumerable<LeaderboardEntry>> GetLeaderboardAsync(DateTime? startUtc, DateTime? endUtc, int? durationInSeconds, string? mode, int topN)
@@ -70,7 +122,7 @@ namespace MonkeyType.Infrastructure.Repositories
                     sg.Accuracy,
                     sg.DurationInSeconds,
                     sg.CreatedAt,
-                    WordsPerMinute = (decimal)sg.CorrectCharacters * 12m / sg.DurationInSeconds
+                    sg.WordsPerMinute
                 })
                 .GroupBy(x => x.UserId)
                 .Select(g => g

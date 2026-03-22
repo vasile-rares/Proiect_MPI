@@ -1,22 +1,43 @@
-namespace MonkeyType.Domain.Entities
+using System.ComponentModel.DataAnnotations;
+
+namespace MonkeyType.Shared.DTOs.Responses.StatisticsGame
 {
-    public class StatisticsGame
+    public class StatisticsGameResponseDTO
     {
         public Guid Id { get; set; }
-        public Guid UserId { get; set; }
-        public decimal WordsPerMinute { get; set; }
-        public decimal RawWordsPerMinute { get; set; }
-        public decimal Accuracy { get; set; }
-        public decimal Consistency { get; set; }
-        public int CorrectCharacters { get; set; }
-        public int IncorrectCharacters { get; set; }
-        public int ExtraCharacters { get; set; }
-        public int MissedCharacters { get; set; }
-        public int DurationInSeconds { get; set; }
-        public string Mode { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-        public DateTime? DeletedAt { get; set; }
 
-        public User User { get; set; } = null!;
+        public Guid UserId { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal WordsPerMinute { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal RawWordsPerMinute { get; set; }
+
+        [Range(0, 100)]
+        public decimal Accuracy { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal Consistency { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int CorrectCharacters { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int IncorrectCharacters { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int ExtraCharacters { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int MissedCharacters { get; set; }
+
+        [Range(1, int.MaxValue)]
+        public int DurationInSeconds { get; set; }
+
+        [StringLength(50, MinimumLength = 1)]
+        public string Mode { get; set; } = string.Empty;
+
+        public DateTime CreatedAt { get; set; }
     }
 }

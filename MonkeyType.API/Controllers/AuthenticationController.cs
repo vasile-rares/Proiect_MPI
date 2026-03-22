@@ -1,12 +1,14 @@
 using MonkeyType.Application.IServices;
 using MonkeyType.Shared.DTOs.Requests.User;
 using MonkeyType.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MonkeyType.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    //[Authorize]
     public class AuthenticationController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -38,38 +40,18 @@ namespace MonkeyType.API.Controllers
             return true;
         }
 
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDTO request)
         {
-            if(string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password) || 
-            string.IsNullOrEmpty(request.Email))
+            if (!ModelState.IsValid)
             {
-                return BadRequest("Username, password, and email are required.");
+                return ValidationProblem(ModelState);
             }
 
             if(!ValidatePassword(request.Password))
             {
                 return BadRequest("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit and one special character.");
-            }
-
-            if (request.Password != request.VerifyPassword)
-            {
-                return BadRequest("Passwords do not match.");
-            }
-
-            if (request.Email != request.VerifyEmail)
-            {
-                return BadRequest("Emails do not match.");
-            }
-
-            if(request.Username.Length < 3)
-            {
-                return BadRequest("Username must be at least 3 characters long.");
-            }
-
-            if(!request.Email.Contains("@") || !request.Email.Contains("."))
-            {
-                return BadRequest("Invalid email format.");
             }
 
             var existingUser = await _userService.GetByUsernameAsync(request.Username);
@@ -107,9 +89,15 @@ namespace MonkeyType.API.Controllers
             });
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
         {
+            if (!ModelState.IsValid)
+            {
+                return ValidationProblem(ModelState);
+            }
+
             var user = await _userService.GetByUsernameAsync(request.Username);
             if (user == null)
             {

@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MonkeyType.API.Helpers;
 using MonkeyType.Application.IServices;
 using MonkeyType.Shared.DTOs.Requests.User;
 using MonkeyType.Shared.DTOs.Responses.User;
@@ -7,6 +9,7 @@ namespace MonkeyType.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    //[Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -21,6 +24,11 @@ namespace MonkeyType.API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserById(Guid id)
         {
+            if (!UserContextHelper.IsSelf(User, id))
+            {
+                return Forbid();
+            }
+
             var user = await _userService.GetByIdAsync(id);
             if (user == null)
             {
@@ -40,37 +48,41 @@ namespace MonkeyType.API.Controllers
         }
 
         [HttpPatch("{id}/update")]
-        public async Task<IActionResult> UpdateUser(Guid id)
+        public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UserUpdateRequestDTO request)
         {
-            var user = await _userService.GetByIdAsync(id);
-            if (user == null)
+            if (!ModelState.IsValid)
+            {
+                return ValidationProblem(ModelState);
+            }
+
+            if (!UserContextHelper.IsSelf(User, id))
+            {
+                return Forbid();
+            }
+
+            var updated = await _userService.UpdateAsync(id, request);
+            if (!updated)
             {
                 return NotFound("User not found.");
             }
 
-            var existingUser = new UserUpdateRequestDTO
-            {
-                Username = user.Username,
-                Email = user.Email,
-                TestsStarted = user.TestsStarted,
-                TestsCompleted = user.TestsCompleted,
-                Biography = user.Biography
-            };
-
-            await _userService.UpdateAsync(existingUser);
             return Ok();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(Guid id)
         {
-            var user = await _userService.GetByIdAsync(id);
-            if (user == null)
+            if (!UserContextHelper.IsSelf(User, id))
+            {
+                return Forbid();
+            }
+
+            var deleted = await _userService.DeleteAsync(id);
+            if (!deleted)
             {
                 return NotFound("User not found.");
             }
 
-            await _userService.DeleteAsync(user);
             return Ok();
         }
     }

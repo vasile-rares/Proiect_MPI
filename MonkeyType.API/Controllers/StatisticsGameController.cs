@@ -1,11 +1,17 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MonkeyType.API.Helpers;
 using MonkeyType.Application.IServices;
+using MonkeyType.Shared.DTOs.Requests.Common;
 using MonkeyType.Shared.DTOs.Requests.StatisticsGame;
+using MonkeyType.Shared.DTOs.Responses.StatisticsGame;
+using System.ComponentModel.DataAnnotations;
 
 namespace MonkeyType.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    //[Authorize]
     public class StatisticsGameController : ControllerBase
     {
         private readonly ILogger<StatisticsGameController> _logger;
@@ -18,10 +24,15 @@ namespace MonkeyType.API.Controllers
         }
 
         [HttpGet("user/{id}")]
-        public async Task<IActionResult> GetStatisticsByUser(Guid id)
+        public async Task<IActionResult> GetStatisticsByUser(Guid id, [FromQuery] PaginationRequestDTO pagination)
         {
-            var statistics = await _statisticsGameService.GetByUserIdAsync(id);
-            if (statistics == null)
+            if (!UserContextHelper.IsSelf(User, id))
+            {
+                return Forbid();
+            }
+
+            var statistics = await _statisticsGameService.GetByUserIdPagedAsync(id, pagination.PageNumber, pagination.PageSize);
+            if (statistics.Items == null || !statistics.Items.Any())
             {
                 return NotFound("Statistics not found.");
             }
@@ -38,74 +49,84 @@ namespace MonkeyType.API.Controllers
                 return NotFound("Statistics not found.");
             }
 
+            if (!UserContextHelper.IsSelf(User, statistics.UserId))
+            {
+                return Forbid();
+            }
+
             return Ok(statistics);
         }
 
         [HttpPost]
         public async Task<IActionResult> AddStatistics([FromBody] StatisticsGameRequestDTO statisticsGame)
         {
-            if(statisticsGame == null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest("Invalid statistics data.");
+                return ValidationProblem(ModelState);
             }
 
-            if(statisticsGame.WordsPerMinute < 0 || statisticsGame.Accuracy < 0 || statisticsGame.Accuracy > 100)
+            if (!UserContextHelper.IsSelf(User, statisticsGame.UserId))
             {
-                return BadRequest("Invalid statistics values.");
+                return Forbid();
             }
 
-            if(statisticsGame.DurationInSeconds <= 0)
+            try
             {
-                return BadRequest("Duration must be greater than zero.");
+                await _statisticsGameService.AddAsync(statisticsGame);
+                return Ok("Statistics added successfully.");
             }
-
-            if(string.IsNullOrEmpty(statisticsGame.Mode))
+            catch (ArgumentException ex)
             {
-                return BadRequest("Mode is required.");
+                return BadRequest(ex.Message);
             }
-
-            if(statisticsGame.CorrectCharacters < 0 || statisticsGame.IncorrectCharacters < 0 || statisticsGame.ExtraCharacters < 0 || statisticsGame.MissedCharacters < 0)
-            {
-                return BadRequest("Character counts cannot be negative.");
-            }
-
-            await _statisticsGameService.AddAsync(statisticsGame);
-            return Ok("Statistics added successfully.");
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllStatistics()
+        public async Task<IActionResult> GetAllStatistics([FromQuery] PaginationRequestDTO pagination)
         {
-            var statistics = await _statisticsGameService.GetAllAsync();
+            var statistics = await _statisticsGameService.GetPagedAsync(pagination.PageNumber, pagination.PageSize);
             return Ok(statistics);
         }
 
         [HttpGet("user/{id}/average")]
         public async Task<IActionResult> GetAverageStatisticsByUser(Guid id)
         {
-            var statistics = await _statisticsGameService.GetByUserIdAsync(id);
-            if (statistics == null || !statistics.Any())
+            if (!UserContextHelper.IsSelf(User, id))
+            {
+                return Forbid();
+            }
+
+            var aggregate = await _statisticsGameService.GetAggregateByUserIdAsync(id);
+            if (aggregate == null || aggregate.GamesCount == 0)
             {
                 return NotFound("Statistics not found.");
             }
 
-            var averageStatistics = new
+            var response = new UserStatsAggregateResponseDTO
             {
-                AverageWordsPerMinute = statistics.Average(s => s.WordsPerMinute),
-                AverageAccuracy = statistics.Average(s => s.Accuracy),
-                AverageConsistency = statistics.Average(s => s.Consistency),
-                AverageDurationInSeconds = statistics.Average(s => s.DurationInSeconds)
+                UserId = aggregate.UserId,
+                GamesCount = aggregate.GamesCount,
+                HighestWordsPerMinute = aggregate.HighestWordsPerMinute,
+                AverageWordsPerMinute = aggregate.AverageWordsPerMinute,
+                HighestRawWordsPerMinute = aggregate.HighestRawWordsPerMinute,
+                AverageRawWordsPerMinute = aggregate.AverageRawWordsPerMinute,
+                HighestAccuracy = aggregate.HighestAccuracy,
+                AverageAccuracy = aggregate.AverageAccuracy,
+                HighestConsistency = aggregate.HighestConsistency,
+                AverageConsistency = aggregate.AverageConsistency,
+                UpdatedAt = aggregate.UpdatedAt
             };
 
-            return Ok(averageStatistics);
+            return Ok(response);
         }
 
+        [AllowAnonymous]
         [HttpGet("leaderboard")]
         public async Task<IActionResult> GetLeaderboard(
             [FromQuery] string scope = "daily",
             [FromQuery] int? durationInSeconds = null,
             [FromQuery] string? mode = null,
-            [FromQuery] int topN = 10)
+            [FromQuery, Range(1, 100)] int topN = 10)
         {
             try
             {
