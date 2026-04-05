@@ -114,16 +114,20 @@ namespace MonkeyType.Infrastructure.Repositories
                 query = query.Where(sg => sg.Mode == mode);
             }
 
-            var leaderboard = await query
+            var entries = await query
                 .Select(sg => new
                 {
                     sg.UserId,
+                    Username = sg.User.Username,
                     sg.Mode,
                     sg.Accuracy,
                     sg.DurationInSeconds,
                     sg.CreatedAt,
                     sg.WordsPerMinute
                 })
+                .ToListAsync();
+
+            var leaderboard = entries
                 .GroupBy(x => x.UserId)
                 .Select(g => g
                     .OrderByDescending(x => x.WordsPerMinute)
@@ -137,13 +141,14 @@ namespace MonkeyType.Infrastructure.Repositories
                 .Select(x => new LeaderboardEntry
                 {
                     UserId = x.UserId,
+                    Username = x.Username,
                     Mode = x.Mode,
                     Accuracy = x.Accuracy,
                     DurationInSeconds = x.DurationInSeconds,
                     CreatedAt = x.CreatedAt,
                     WordsPerMinute = x.WordsPerMinute
                 })
-                .ToListAsync();
+                .ToList();
 
             return leaderboard;
         }

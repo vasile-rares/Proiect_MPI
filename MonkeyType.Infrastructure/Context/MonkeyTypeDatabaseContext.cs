@@ -22,7 +22,7 @@ public class MonkeyTypeDatabaseContext : DbContext
 		{
 			entity.HasKey(user => user.Id);
 			entity.Property(user => user.Username).IsRequired();
-            entity.Property(user => user.Email).IsRequired();
+			entity.Property(user => user.Email).IsRequired();
 			entity.Property(user => user.PasswordHash).IsRequired();
 			entity.HasQueryFilter(user => user.DeletedAt == null);
 		});
@@ -36,7 +36,7 @@ public class MonkeyTypeDatabaseContext : DbContext
 
 			entity.HasQueryFilter(statisticsGame => statisticsGame.DeletedAt == null && statisticsGame.User.DeletedAt == null);
 
-			entity.HasOne<User>()
+			entity.HasOne(statisticsGame => statisticsGame.User)
 				.WithMany()
 				.HasForeignKey(statisticsGame => statisticsGame.UserId)
 				.OnDelete(DeleteBehavior.Cascade);
