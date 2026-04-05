@@ -3,7 +3,9 @@ import { register } from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
 
 export default function Register() {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [confirmEmail, setConfirmEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -14,24 +16,61 @@ export default function Register() {
     e.preventDefault();
     setError("");
 
-    if (!email || !password) {
+    // 🔍 VALIDARI
+    if (!username || !email || !confirmEmail || !password || !confirmPassword) {
       setError("please fill in all fields");
       return;
     }
+
+    if (username.length < 3) {
+      setError("username must be at least 3 characters");
+      return;
+    }
+
+    if (!email.includes("@")) {
+      setError("invalid email");
+      return;
+    }
+
+    if (email !== confirmEmail) {
+      setError("emails don't match");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("passwords don't match");
       return;
     }
-    if (password.length < 6) {
-      setError("password must be at least 6 characters");
+
+    if (password.length < 8) {
+      setError("password must be at least 8 characters");
       return;
     }
 
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+      setError("password needs uppercase, lowercase, digit, and special character");
+      return;
+    }
+
+    // 🚀 REQUEST
     setLoading(true);
     try {
-      await register({ email, password });
-      navigate("/");
+      const res = await register({
+        username,
+        email,
+        verifyEmail: confirmEmail,
+        password,
+        verifyPassword: confirmPassword,
+      });
+
+      // 🔐 salvam token
+      if (res?.token) {
+        localStorage.setItem("token", res.token);
+      }
+
+      navigate("/game");
     } catch (err) {
+      console.error(err);
       setError(err.message || "registration failed, try again");
     } finally {
       setLoading(false);
@@ -44,36 +83,55 @@ export default function Register() {
         <span style={{ fontSize: "2rem" }}>⌨️</span>
         <h1 className="auth-title">monkeytype</h1>
       </div>
+
       <form onSubmit={handleRegister} className="auth-input-group">
+        <input
+          className="auth-input"
+          type="text"
+          placeholder="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+
         <input
           className="auth-input"
           type="email"
           placeholder="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
         />
+
+        <input
+          className="auth-input"
+          type="email"
+          placeholder="confirm email"
+          value={confirmEmail}
+          onChange={(e) => setConfirmEmail(e.target.value)}
+        />
+
         <input
           className="auth-input"
           type="password"
           placeholder="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          autoComplete="new-password"
         />
+
         <input
           className="auth-input"
           type="password"
           placeholder="confirm password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          autoComplete="new-password"
         />
-        <div className="auth-error">{error}</div>
+
+        {error && <div className="auth-error">{error}</div>}
+
         <button className="auth-btn" type="submit" disabled={loading}>
-          {loading ? "..." : "sign up"}
+          {loading ? "creating account..." : "sign up"}
         </button>
       </form>
+
       <p className="auth-switch">
         already have an account? <Link to="/">sign in</Link>
       </p>

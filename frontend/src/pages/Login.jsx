@@ -3,7 +3,7 @@ import { login } from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -13,23 +13,23 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
-    if (!email || !password) {
+    if (!username || !password) {
       setError("please fill in all fields");
       return;
     }
 
     setLoading(true);
     try {
-      const res = await login({ email, password });
+      const res = await login({ username, password });
 
-      if (res && res.id) {
-        localStorage.setItem("userId", res.id);
+      if (res?.token) {
+        localStorage.setItem("token", res.token);
         navigate("/game");
       } else {
-        setError("invalid email or password");
+        setError("invalid username or password");
       }
     } catch (err) {
-      setError("something went wrong, try again");
+      setError(err.message || "something went wrong, try again");
     } finally {
       setLoading(false);
     }
@@ -44,11 +44,11 @@ export default function Login() {
       <form onSubmit={handleLogin} className="auth-input-group">
         <input
           className="auth-input"
-          type="email"
-          placeholder="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
+          type="text"
+          placeholder="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          autoComplete="username"
         />
         <input
           className="auth-input"

@@ -3,15 +3,17 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Game from "./pages/Game";
 import Leaderboard from "./pages/Leaderboard";
+import { isLoggedIn as checkAuth, logout, getUsername } from "./services/api";
 import "./App.css";
 
 function Header() {
   const navigate = useNavigate();
   const location = useLocation();
-  const isLoggedIn = localStorage.getItem("userId");
+  const loggedIn = checkAuth();
+  const username = getUsername();
 
   const handleLogout = () => {
-    localStorage.removeItem("userId");
+    logout();
     navigate("/");
   };
 
@@ -38,7 +40,12 @@ function Header() {
         >
           ♛ leaderboard
         </Link>
-        {isLoggedIn && (
+        {loggedIn && (
+          <span className="nav-link" style={{ cursor: "default", color: "var(--sub-color)" }}>
+            {username || "user"}
+          </span>
+        )}
+        {loggedIn && (
           <button className="nav-link" onClick={handleLogout}>
             ⏻ logout
           </button>

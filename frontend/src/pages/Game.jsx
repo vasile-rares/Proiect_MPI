@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { saveScore } from "../services/api";
+import { saveScore, getUserId } from "../services/api";
 
 const wordBank = [
   "the", "be", "to", "of", "and", "a", "in", "that", "have", "i",
@@ -55,8 +55,14 @@ export default function Game() {
   const wordsRef = useRef(null);
   const startTimeRef = useRef(null);
   const correctCharsRef = useRef(0);
-  const totalCharsRef = useRef(0);
+  const incorrectCharsRef = useRef(0);
+  const extraCharsRef = useRef(0);
+  const missedCharsRef = useRef(0);
   const correctWordsRef = useRef(0);
+  const charsTypedPerWordRef = useRef({});
+  const currentWordIndexRef = useRef(0);
+  const currentCharIndexRef = useRef(0);
+  const wordsListRef = useRef(words);
 
   const resetTest = useCallback(() => {
     clearInterval(timerRef.current);
@@ -71,9 +77,16 @@ export default function Game() {
     setExtraChars({});
     setStats(null);
     correctCharsRef.current = 0;
-    totalCharsRef.current = 0;
+    incorrectCharsRef.current = 0;
+    extraCharsRef.current = 0;
+    missedCharsRef.current = 0;
     correctWordsRef.current = 0;
+    charsTypedPerWordRef.current = {};
+    currentWordIndexRef.current = 0;
+    currentCharIndexRef.current = 0;
+    wordsListRef.current = newWords;
     startTimeRef.current = null;
+    if (wordsRef.current) wordsRef.current.style.transform = '';
     setTimeout(() => typingRef.current?.focus(), 50);
   }, [timeOption]);
 
@@ -91,9 +104,16 @@ export default function Game() {
     setExtraChars({});
     setStats(null);
     correctCharsRef.current = 0;
-    totalCharsRef.current = 0;
+    incorrectCharsRef.current = 0;
+    extraCharsRef.current = 0;
+    missedCharsRef.current = 0;
     correctWordsRef.current = 0;
+    charsTypedPerWordRef.current = {};
+    currentWordIndexRef.current = 0;
+    currentCharIndexRef.current = 0;
+    wordsListRef.current = newWords;
     startTimeRef.current = null;
+    if (wordsRef.current) wordsRef.current.style.transform = '';
     setTimeout(() => typingRef.current?.focus(), 50);
   };
 
@@ -101,23 +121,51 @@ export default function Game() {
     clearInterval(timerRef.current);
     setFinished(true);
 
+    const currentWi = currentWordIndexRef.current;
+    const currentCi = currentCharIndexRef.current;
+    const wordsList = wordsListRef.current;
+    const currentWord = wordsList[currentWi];
+    if (currentWord && currentCi < currentWord.length) {
+      missedCharsRef.current += currentWord.length - currentCi;
+    }
+
+    const totalTyped = correctCharsRef.current + incorrectCharsRef.current + extraCharsRef.current;
+    const totalMeasured = totalTyped + missedCharsRef.current;
     const elapsed = (Date.now() - startTimeRef.current) / 1000 / 60;
-    const wpm = Math.round((correctCharsRef.current / 5) / elapsed);
-    const accuracy = totalCharsRef.current > 0
-      ? Math.round((correctCharsRef.current / totalCharsRef.current) * 100)
+    const wpm = elapsed > 0 ? Math.round((correctCharsRef.current / 5) / elapsed) : 0;
+    const rawWpm = elapsed > 0 ? Math.round((totalTyped / 5) / elapsed) : 0;
+    const accuracy = totalMeasured > 0
+      ? Math.round((correctCharsRef.current / totalMeasured) * 100)
       : 0;
 
-    setStats({ wpm, accuracy, correct: correctCharsRef.current, total: totalCharsRef.current, words: correctWordsRef.current });
+    setStats({
+      wpm,
+      rawWpm,
+      accuracy,
+      correct: correctCharsRef.current,
+      incorrect: incorrectCharsRef.current,
+      extra: extraCharsRef.current,
+      missed: missedCharsRef.current,
+      words: correctWordsRef.current,
+    });
 
-    const userId = localStorage.getItem("userId");
+    const userId = getUserId();
     if (userId) {
       try {
-        await saveScore({ userId, wpm, accuracy });
+        await saveScore({
+          userId,
+          correctCharacters: correctCharsRef.current,
+          incorrectCharacters: incorrectCharsRef.current,
+          extraCharacters: extraCharsRef.current,
+          missedCharacters: missedCharsRef.current,
+          durationInSeconds: timeOption,
+          mode: "time",
+        });
       } catch (e) {
         console.error("Failed to save score:", e);
       }
     }
-  }, []);
+  }, [timeOption]);
 
   useEffect(() => {
     if (started && !finished) {
@@ -167,20 +215,23 @@ export default function Game() {
           ...prev,
           [currentWordIndex]: extras.slice(0, -1),
         }));
-        totalCharsRef.current = Math.max(0, totalCharsRef.current - 1);
+        extraCharsRef.current = Math.max(0, extraCharsRef.current - 1);
       } else if (currentCharIndex > 0) {
         const newIndex = currentCharIndex - 1;
         const key = `${currentWordIndex}-${newIndex}`;
         if (charStates[key] === "correct") {
           correctCharsRef.current = Math.max(0, correctCharsRef.current - 1);
+        } else if (charStates[key] === "incorrect") {
+          incorrectCharsRef.current = Math.max(0, incorrectCharsRef.current - 1);
         }
-        totalCharsRef.current = Math.max(0, totalCharsRef.current - 1);
         setCharStates((prev) => {
           const next = { ...prev };
           delete next[key];
           return next;
         });
         setCurrentCharIndex(newIndex);
+        currentCharIndexRef.current = newIndex;
+        charsTypedPerWordRef.current[currentWordIndex] = newIndex;
       }
       return;
     }
@@ -189,18 +240,29 @@ export default function Game() {
       e.preventDefault();
       if (currentCharIndex === 0) return;
 
+      const missed = Math.max(0, currentWord.length - currentCharIndex);
+      missedCharsRef.current += missed;
+
       const wordCorrect = currentWord.split("").every((ch, i) => {
         return charStates[`${currentWordIndex}-${i}`] === "correct";
-      }) && extras.length === 0;
+      }) && extras.length === 0 && missed === 0;
 
       if (wordCorrect) correctWordsRef.current++;
-      totalCharsRef.current++;
 
-      setCurrentWordIndex((prev) => prev + 1);
+      setCurrentWordIndex((prev) => {
+        const next = prev + 1;
+        currentWordIndexRef.current = next;
+        return next;
+      });
       setCurrentCharIndex(0);
+      currentCharIndexRef.current = 0;
 
       if (currentWordIndex >= words.length - 10) {
-        setWords((prev) => [...prev, ...generateWords(30)]);
+        setWords((prev) => {
+          const updated = [...prev, ...generateWords(30)];
+          wordsListRef.current = updated;
+          return updated;
+        });
       }
       return;
     }
@@ -214,15 +276,22 @@ export default function Game() {
           ...prev,
           [key]: isCorrect ? "correct" : "incorrect",
         }));
-        if (isCorrect) correctCharsRef.current++;
-        totalCharsRef.current++;
-        setCurrentCharIndex((prev) => prev + 1);
+        if (isCorrect) {
+          correctCharsRef.current++;
+        } else {
+          incorrectCharsRef.current++;
+        }
+        setCurrentCharIndex((prev) => {
+          currentCharIndexRef.current = prev + 1;
+          return prev + 1;
+        });
+        charsTypedPerWordRef.current[currentWordIndex] = currentCharIndex + 1;
       } else {
         setExtraChars((prev) => ({
           ...prev,
           [currentWordIndex]: (prev[currentWordIndex] || "") + e.key,
         }));
-        totalCharsRef.current++;
+        extraCharsRef.current++;
       }
     }
   }, [finished, started, words, currentWordIndex, currentCharIndex, charStates, extraChars, resetTest]);
@@ -232,10 +301,9 @@ export default function Game() {
       const activeWord = wordsRef.current.querySelector(".word.active");
       if (activeWord) {
         const container = wordsRef.current;
-        const wordTop = activeWord.offsetTop;
         const lineHeight = activeWord.offsetHeight;
-        if (wordTop > lineHeight * 1.5) {
-          container.style.transform = `translateY(-${wordTop - lineHeight * 0.5}px)`;
+        if (activeWord.offsetTop > lineHeight * 2) {
+          container.style.transform = `translateY(-${activeWord.offsetTop - lineHeight}px)`;
         }
       }
     }
@@ -250,6 +318,10 @@ export default function Game() {
             <span className="stat-value">{stats.wpm}</span>
           </div>
           <div className="stat-block">
+            <span className="stat-label">raw</span>
+            <span className="stat-value secondary">{stats.rawWpm}</span>
+          </div>
+          <div className="stat-block">
             <span className="stat-label">accuracy</span>
             <span className="stat-value">{stats.accuracy}%</span>
           </div>
@@ -259,7 +331,12 @@ export default function Game() {
           </div>
           <div className="stat-block">
             <span className="stat-label">characters</span>
-            <span className="stat-value secondary">{stats.correct}/{stats.total}</span>
+            <span className="stat-value secondary" style={{ fontSize: "1.4rem" }}>
+              <span style={{ color: "var(--correct-color)" }}>{stats.correct}</span>/
+              <span style={{ color: "var(--error-color)" }}>{stats.incorrect}</span>/
+              <span style={{ color: "var(--error-extra-color)" }}>{stats.extra}</span>/
+              <span style={{ color: "var(--sub-color)" }}>{stats.missed}</span>
+            </span>
           </div>
         </div>
         <div className="result-actions">

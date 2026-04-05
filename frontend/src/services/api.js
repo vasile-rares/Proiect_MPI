@@ -1,4 +1,61 @@
-const API_URL = "http://localhost:5232/api";
+const API_URL = "/api";
+
+// ========== JWT Helpers ==========
+
+function parseJwt(token) {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
+export function getToken() {
+  return localStorage.getItem("token");
+}
+
+export function getUserId() {
+  const token = getToken();
+  if (!token) return null;
+  const payload = parseJwt(token);
+  return payload?.sub || null;
+}
+
+export function getUsername() {
+  const token = getToken();
+  if (!token) return null;
+  const payload = parseJwt(token);
+  return payload?.unique_name || null;
+}
+
+export function isLoggedIn() {
+  const token = getToken();
+  if (!token) return false;
+  const payload = parseJwt(token);
+  if (!payload?.exp) return false;
+  return payload.exp * 1000 > Date.now();
+}
+
+export function logout() {
+  localStorage.removeItem("token");
+}
+
+function authHeaders() {
+  const token = getToken();
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return headers;
+}
+
+// ========== API Calls ==========
 
 export const login = async (data) => {
   const res = await fetch(`${API_URL}/Authentication/login`, {
@@ -7,7 +64,20 @@ export const login = async (data) => {
     body: JSON.stringify(data),
   });
 
-  return res.json();
+  const body = await res.text();
+
+  if (!res.ok) {
+    let message = "Login failed";
+    try {
+      const json = JSON.parse(body);
+      message = json.message || json.title || message;
+    } catch {
+      if (body) message = body;
+    }
+    throw new Error(message);
+  }
+
+  return JSON.parse(body);
 };
 
 export const register = async (data) => {
@@ -20,36 +90,46 @@ export const register = async (data) => {
   const body = await res.text();
 
   if (!res.ok) {
-    let message = "registration failed";
+    let message = "Registration failed";
     try {
       const json = JSON.parse(body);
-      message = json.message || json.title || json.errors
-        ? JSON.stringify(json.errors || json.message || json.title)
-        : message;
+      message =
+        json.message ||
+        json.title ||
+        (json.errors ? JSON.stringify(json.errors) : message);
     } catch {
       if (body) message = body;
     }
     throw new Error(message);
   }
 
-  try {
-    return JSON.parse(body);
-  } catch {
-    return body;
-  }
+  return JSON.parse(body);
 };
 
-export const getLeaderboard = async () => {
-  const res = await fetch(`${API_URL}/StatisticsGame/leaderboard`);
+export const getLeaderboard = async (scope = "all-time", durationInSeconds, mode, topN = 10) => {
+  const params = new URLSearchParams({ scope, topN: topN.toString() });
+  if (durationInSeconds) params.set("durationInSeconds", durationInSeconds.toString());
+  if (mode) params.set("mode", mode);
+
+  const res = await fetch(`${API_URL}/StatisticsGame/leaderboard?${params}`);
+  if (!res.ok) throw new Error("Failed to fetch leaderboard");
   return res.json();
 };
 
 export const saveScore = async (data) => {
   const res = await fetch(`${API_URL}/StatisticsGame`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify(data),
   });
 
-  return res.json();
+  const body = await res.text();
+  if (!res.ok) {
+    throw new Error(body || "Failed to save score");
+  }
+  try {
+    return JSON.parse(body);
+  } catch {
+    return body;
+  }
 };
