@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { getLeaderboard, getUserId } from "../services/api";
+import { getLeaderboard, getUserId, getUsername } from "../services/api";
 
 const DURATION_OPTIONS = [15, 30, 60, 120];
-const SCOPE_OPTIONS = ["all-time", "daily"];
+const SCOPE_OPTIONS = ["all-time", "weekly", "daily"];
 
 export default function Leaderboard() {
   const [data, setData] = useState([]);
@@ -10,13 +10,13 @@ export default function Leaderboard() {
   const [duration, setDuration] = useState(30);
   const [scope, setScope] = useState("all-time");
   const myUserId = getUserId();
+  const myUsername = getUsername();
 
   useEffect(() => {
     setLoading(true);
     getLeaderboard(scope, duration, "time", 20)
       .then((res) => {
-        if (Array.isArray(res)) setData(res);
-        else setData([]);
+        setData(Array.isArray(res) ? res : []);
       })
       .catch(() => setData([]))
       .finally(() => setLoading(false));
@@ -73,6 +73,8 @@ export default function Leaderboard() {
               <th>wpm</th>
               <th>accuracy</th>
               <th>time</th>
+              <th>mode</th>
+              <th>date</th>
             </tr>
           </thead>
           <tbody>
@@ -82,7 +84,7 @@ export default function Leaderboard() {
                   {index + 1}
                 </td>
                 <td className="username-cell">
-                  {item.userId === myUserId ? "you" : item.username || "—"}
+                  {item.userId === myUserId ? myUsername || "you" : `player ${index + 1}`}
                 </td>
                 <td className="wpm-cell">
                   {item.wordsPerMinute != null ? Math.round(item.wordsPerMinute) : "—"}
@@ -91,6 +93,10 @@ export default function Leaderboard() {
                   {item.accuracy != null ? `${Math.round(item.accuracy)}%` : "—"}
                 </td>
                 <td style={{ color: "var(--sub-color)" }}>{item.durationInSeconds}s</td>
+                <td style={{ color: "var(--sub-color)" }}>{item.mode || "—"}</td>
+                <td style={{ color: "var(--sub-color)", fontSize: "0.8rem" }}>
+                  {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"}
+                </td>
               </tr>
             ))}
           </tbody>

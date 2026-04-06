@@ -38,8 +38,8 @@ export default function Login() {
   return (
     <div className="auth-container">
       <div style={{ textAlign: "center", marginBottom: "10px" }}>
-        <span style={{ fontSize: "2rem" }}>⌨️</span>
-        <h1 className="auth-title">monkeytype</h1>
+        <span style={{ fontSize: "2.4rem", color: "var(--main-color)" }}>⌘</span>
+        <h1 className="auth-title">keyless</h1>
       </div>
       <form onSubmit={handleLogin} className="auth-input-group">
         <input

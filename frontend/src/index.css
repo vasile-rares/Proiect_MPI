@@ -1,13 +1,15 @@
 :root {
-  --bg-color: #323437;
-  --main-color: #e2b714;
-  --sub-color: #646669;
-  --text-color: #d1d0c5;
-  --error-color: #ca4754;
-  --error-extra-color: #7e2a33;
-  --bg-secondary: #2c2e31;
-  --correct-color: #d1d0c5;
-  --caret-color: #e2b714;
+  --bg-color: #1a1a2e;
+  --main-color: #9b59b6;
+  --sub-color: #5c5680;
+  --text-color: #d4d0e8;
+  --error-color: #e74c6f;
+  --error-extra-color: #8b2d42;
+  --bg-secondary: #222240;
+  --correct-color: #d4d0e8;
+  --caret-color: #b06ee0;
+  --accent-glow: rgba(155, 89, 182, 0.14);
+  --bg-tertiary: #2a2a4a;
 }
 
 * {
@@ -19,7 +21,7 @@
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;

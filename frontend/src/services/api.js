@@ -1,7 +1,5 @@
 const API_URL = "/api";
 
-// ========== JWT Helpers ==========
-
 function parseJwt(token) {
   try {
     const base64Url = token.split(".")[1];
@@ -55,7 +53,6 @@ function authHeaders() {
   return headers;
 }
 
-// ========== API Calls ==========
 
 export const login = async (data) => {
   const res = await fetch(`${API_URL}/Authentication/login`, {
@@ -132,4 +129,71 @@ export const saveScore = async (data) => {
   } catch {
     return body;
   }
+};
+
+
+export const getUserProfile = async (id) => {
+  const res = await fetch(`${API_URL}/User/${id}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to fetch profile");
+  return res.json();
+};
+
+export const updateUserProfile = async (id, data) => {
+  const res = await fetch(`${API_URL}/User/${id}/update`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    let message = "Failed to update profile";
+    try {
+      const json = JSON.parse(body);
+      message = json.message || json.title || (json.errors ? JSON.stringify(json.errors) : message);
+    } catch {
+      if (body) message = body;
+    }
+    throw new Error(message);
+  }
+  return true;
+};
+
+export const deleteUserAccount = async (id) => {
+  const res = await fetch(`${API_URL}/User/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to delete account");
+  return true;
+};
+
+
+export const getUserStats = async (id, pageNumber = 1, pageSize = 20) => {
+  const params = new URLSearchParams({
+    pageNumber: pageNumber.toString(),
+    pageSize: pageSize.toString(),
+  });
+  const res = await fetch(`${API_URL}/StatisticsGame/user/${id}?${params}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to fetch statistics");
+  return res.json();
+};
+
+export const getStatById = async (id) => {
+  const res = await fetch(`${API_URL}/StatisticsGame/${id}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to fetch statistic");
+  return res.json();
+};
+
+export const getUserStatsAggregate = async (id) => {
+  const res = await fetch(`${API_URL}/StatisticsGame/user/${id}/average`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to fetch stats aggregate");
+  return res.json();
 };

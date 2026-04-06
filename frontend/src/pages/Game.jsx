@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { saveScore, getUserId } from "../services/api";
+import { saveScore, getUserId, getUserProfile, updateUserProfile } from "../services/api";
 
 const wordBank = [
   "the", "be", "to", "of", "and", "a", "in", "that", "have", "i",
@@ -45,7 +45,7 @@ export default function Game() {
   const [started, setStarted] = useState(false);
   const [finished, setFinished] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [currentCharIndex, setCurrentCharIndex] = useState(0);
+  const [, setCurrentCharIndex] = useState(0);
   const [charStates, setCharStates] = useState({});
   const [extraChars, setExtraChars] = useState({});
   const [isFocused, setIsFocused] = useState(false);
@@ -63,6 +63,11 @@ export default function Game() {
   const currentWordIndexRef = useRef(0);
   const currentCharIndexRef = useRef(0);
   const wordsListRef = useRef(words);
+  const charStatesRef = useRef({});
+  const extraCharsMapRef = useRef({});
+  const startedRef = useRef(false);
+  const finishedRef = useRef(false);
+  const scrollLineRef = useRef(0);
 
   const resetTest = useCallback(() => {
     clearInterval(timerRef.current);
@@ -85,8 +90,13 @@ export default function Game() {
     currentWordIndexRef.current = 0;
     currentCharIndexRef.current = 0;
     wordsListRef.current = newWords;
+    charStatesRef.current = {};
+    extraCharsMapRef.current = {};
+    startedRef.current = false;
+    finishedRef.current = false;
+    scrollLineRef.current = 0;
     startTimeRef.current = null;
-    if (wordsRef.current) wordsRef.current.style.transform = '';
+    if (wordsRef.current) wordsRef.current.style.transform = 'translateY(0px)';
     setTimeout(() => typingRef.current?.focus(), 50);
   }, [timeOption]);
 
@@ -112,13 +122,19 @@ export default function Game() {
     currentWordIndexRef.current = 0;
     currentCharIndexRef.current = 0;
     wordsListRef.current = newWords;
+    charStatesRef.current = {};
+    extraCharsMapRef.current = {};
+    startedRef.current = false;
+    finishedRef.current = false;
+    scrollLineRef.current = 0;
     startTimeRef.current = null;
-    if (wordsRef.current) wordsRef.current.style.transform = '';
+    if (wordsRef.current) wordsRef.current.style.transform = 'translateY(0px)';
     setTimeout(() => typingRef.current?.focus(), 50);
   };
 
   const finishTest = useCallback(async () => {
     clearInterval(timerRef.current);
+    finishedRef.current = true;
     setFinished(true);
 
     const currentWi = currentWordIndexRef.current;
@@ -137,11 +153,13 @@ export default function Game() {
     const accuracy = totalMeasured > 0
       ? Math.round((correctCharsRef.current / totalMeasured) * 100)
       : 0;
+    const consistency = rawWpm > 0 ? Math.round((wpm / rawWpm) * 100) : 0;
 
     setStats({
       wpm,
       rawWpm,
       accuracy,
+      consistency,
       correct: correctCharsRef.current,
       incorrect: incorrectCharsRef.current,
       extra: extraCharsRef.current,
@@ -161,6 +179,15 @@ export default function Game() {
           durationInSeconds: timeOption,
           mode: "time",
         });
+        getUserProfile(userId).then((prof) => {
+          updateUserProfile(userId, {
+            username: prof.username,
+            email: prof.email,
+            testsStarted: prof.testsStarted || 0,
+            testsCompleted: (prof.testsCompleted || 0) + 1,
+            biography: prof.biography,
+          }).catch(() => {});
+        }).catch(() => {});
       } catch (e) {
         console.error("Failed to save score:", e);
       }
@@ -183,15 +210,9 @@ export default function Game() {
   }, [started, finished, finishTest]);
 
   const handleKeyDown = useCallback((e) => {
-    if (finished) return;
+    if (finishedRef.current) return;
 
     if (e.key === "Tab") {
-      e.preventDefault();
-      resetTest();
-      return;
-    }
-
-    if (e.key === "Escape") {
       e.preventDefault();
       resetTest();
       return;
@@ -200,143 +221,176 @@ export default function Game() {
     if (e.ctrlKey || e.altKey || e.metaKey) return;
     if (e.key === "Shift" || e.key === "CapsLock") return;
 
-    if (!started && e.key.length === 1) {
+    if (!startedRef.current && e.key.length === 1) {
+      startedRef.current = true;
       setStarted(true);
       startTimeRef.current = Date.now();
+      const uid = getUserId();
+      if (uid) {
+        getUserProfile(uid).then((prof) => {
+          updateUserProfile(uid, {
+            username: prof.username,
+            email: prof.email,
+            testsStarted: (prof.testsStarted || 0) + 1,
+            testsCompleted: prof.testsCompleted || 0,
+            biography: prof.biography,
+          }).catch(() => {});
+        }).catch(() => {});
+      }
     }
 
-    const currentWord = words[currentWordIndex];
-    const extras = extraChars[currentWordIndex] || "";
+    const wi = currentWordIndexRef.current;
+    const ci = currentCharIndexRef.current;
+    const wordsList = wordsListRef.current;
+    const currentWord = wordsList[wi];
+    const extras = extraCharsMapRef.current[wi] || "";
 
     if (e.key === "Backspace") {
       e.preventDefault();
       if (extras.length > 0) {
-        setExtraChars((prev) => ({
-          ...prev,
-          [currentWordIndex]: extras.slice(0, -1),
-        }));
+        const newExtras = extras.slice(0, -1);
+        extraCharsMapRef.current = { ...extraCharsMapRef.current, [wi]: newExtras };
+        setExtraChars({ ...extraCharsMapRef.current });
         extraCharsRef.current = Math.max(0, extraCharsRef.current - 1);
-      } else if (currentCharIndex > 0) {
-        const newIndex = currentCharIndex - 1;
-        const key = `${currentWordIndex}-${newIndex}`;
-        if (charStates[key] === "correct") {
+      } else if (ci > 0) {
+        const newIndex = ci - 1;
+        const key = `${wi}-${newIndex}`;
+        if (charStatesRef.current[key] === "correct") {
           correctCharsRef.current = Math.max(0, correctCharsRef.current - 1);
-        } else if (charStates[key] === "incorrect") {
+        } else if (charStatesRef.current[key] === "incorrect") {
           incorrectCharsRef.current = Math.max(0, incorrectCharsRef.current - 1);
         }
-        setCharStates((prev) => {
-          const next = { ...prev };
-          delete next[key];
-          return next;
-        });
-        setCurrentCharIndex(newIndex);
+        const nextStates = { ...charStatesRef.current };
+        delete nextStates[key];
+        charStatesRef.current = nextStates;
+        setCharStates(nextStates);
         currentCharIndexRef.current = newIndex;
-        charsTypedPerWordRef.current[currentWordIndex] = newIndex;
+        setCurrentCharIndex(newIndex);
+        charsTypedPerWordRef.current[wi] = newIndex;
       }
       return;
     }
 
     if (e.key === " ") {
       e.preventDefault();
-      if (currentCharIndex === 0) return;
+      if (ci === 0) return;
 
-      const missed = Math.max(0, currentWord.length - currentCharIndex);
+      const missed = Math.max(0, currentWord.length - ci);
       missedCharsRef.current += missed;
 
       const wordCorrect = currentWord.split("").every((ch, i) => {
-        return charStates[`${currentWordIndex}-${i}`] === "correct";
+        return charStatesRef.current[`${wi}-${i}`] === "correct";
       }) && extras.length === 0 && missed === 0;
 
       if (wordCorrect) correctWordsRef.current++;
 
-      setCurrentWordIndex((prev) => {
-        const next = prev + 1;
-        currentWordIndexRef.current = next;
-        return next;
-      });
-      setCurrentCharIndex(0);
+      const nextWi = wi + 1;
+      currentWordIndexRef.current = nextWi;
       currentCharIndexRef.current = 0;
+      setCurrentWordIndex(nextWi);
+      setCurrentCharIndex(0);
 
-      if (currentWordIndex >= words.length - 10) {
-        setWords((prev) => {
-          const updated = [...prev, ...generateWords(30)];
-          wordsListRef.current = updated;
-          return updated;
-        });
+      if (nextWi >= wordsList.length - 10) {
+        const newWords = [...wordsList, ...generateWords(30)];
+        wordsListRef.current = newWords;
+        setWords(newWords);
       }
       return;
     }
 
     if (e.key.length === 1) {
       e.preventDefault();
-      if (currentCharIndex < currentWord.length) {
-        const isCorrect = e.key === currentWord[currentCharIndex];
-        const key = `${currentWordIndex}-${currentCharIndex}`;
-        setCharStates((prev) => ({
-          ...prev,
-          [key]: isCorrect ? "correct" : "incorrect",
-        }));
+      if (ci < currentWord.length) {
+        const isCorrect = e.key === currentWord[ci];
+        const key = `${wi}-${ci}`;
+        charStatesRef.current = { ...charStatesRef.current, [key]: isCorrect ? "correct" : "incorrect" };
+        setCharStates({ ...charStatesRef.current });
         if (isCorrect) {
           correctCharsRef.current++;
         } else {
           incorrectCharsRef.current++;
         }
-        setCurrentCharIndex((prev) => {
-          currentCharIndexRef.current = prev + 1;
-          return prev + 1;
-        });
-        charsTypedPerWordRef.current[currentWordIndex] = currentCharIndex + 1;
+        const nextCi = ci + 1;
+        currentCharIndexRef.current = nextCi;
+        setCurrentCharIndex(nextCi);
+        charsTypedPerWordRef.current[wi] = nextCi;
       } else {
-        setExtraChars((prev) => ({
-          ...prev,
-          [currentWordIndex]: (prev[currentWordIndex] || "") + e.key,
-        }));
+        const newExtras = extras + e.key;
+        extraCharsMapRef.current = { ...extraCharsMapRef.current, [wi]: newExtras };
+        setExtraChars({ ...extraCharsMapRef.current });
         extraCharsRef.current++;
       }
     }
-  }, [finished, started, words, currentWordIndex, currentCharIndex, charStates, extraChars, resetTest]);
+  }, [resetTest]);
 
+  // Smooth scroll: keep active word on the first visible line
   useEffect(() => {
-    if (wordsRef.current && !finished) {
-      const activeWord = wordsRef.current.querySelector(".word.active");
-      if (activeWord) {
-        const container = wordsRef.current;
-        const lineHeight = activeWord.offsetHeight;
-        if (activeWord.offsetTop > lineHeight * 2) {
-          container.style.transform = `translateY(-${activeWord.offsetTop - lineHeight}px)`;
-        }
-      }
+    if (!wordsRef.current || finished) return;
+    const container = wordsRef.current;
+    const activeEl = container.querySelector('.word.active');
+    if (!activeEl) return;
+    const firstWordEl = container.querySelector('.word');
+    if (!firstWordEl) return;
+    const lineHeight = parseFloat(getComputedStyle(container).lineHeight) || 48;
+    const lineIndex = Math.round((activeEl.offsetTop - firstWordEl.offsetTop) / lineHeight);
+    if (lineIndex > scrollLineRef.current) {
+      scrollLineRef.current = lineIndex;
+      container.style.transform = `translateY(-${lineIndex * lineHeight}px)`;
     }
   }, [currentWordIndex, finished]);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (finished) return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (typingRef.current && document.activeElement !== typingRef.current) {
+        typingRef.current.focus();
+      }
+    };
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [finished]);
 
   if (finished && stats) {
     return (
       <div className="results-container">
-        <div className="results-stats">
-          <div className="stat-block">
-            <span className="stat-label">wpm</span>
-            <span className="stat-value">{stats.wpm}</span>
+        <div className="results-grid">
+          <div className="results-card primary">
+            <span className="results-card-label">wpm</span>
+            <span className="results-card-value accent">{stats.wpm}</span>
           </div>
-          <div className="stat-block">
-            <span className="stat-label">raw</span>
-            <span className="stat-value secondary">{stats.rawWpm}</span>
+          <div className="results-card primary">
+            <span className="results-card-label">accuracy</span>
+            <span className="results-card-value accent">{stats.accuracy}%</span>
           </div>
-          <div className="stat-block">
-            <span className="stat-label">accuracy</span>
-            <span className="stat-value">{stats.accuracy}%</span>
+          <div className="results-card primary">
+            <span className="results-card-label">consistency</span>
+            <span className="results-card-value accent">{stats.consistency}%</span>
           </div>
-          <div className="stat-block">
-            <span className="stat-label">correct words</span>
-            <span className="stat-value secondary">{stats.words}</span>
+          <div className="results-card secondary">
+            <span className="results-card-label">raw wpm</span>
+            <span className="results-card-value">{stats.rawWpm}</span>
           </div>
-          <div className="stat-block">
-            <span className="stat-label">characters</span>
-            <span className="stat-value secondary" style={{ fontSize: "1.4rem" }}>
-              <span style={{ color: "var(--correct-color)" }}>{stats.correct}</span>/
-              <span style={{ color: "var(--error-color)" }}>{stats.incorrect}</span>/
-              <span style={{ color: "var(--error-extra-color)" }}>{stats.extra}</span>/
-              <span style={{ color: "var(--sub-color)" }}>{stats.missed}</span>
-            </span>
+          <div className="results-card secondary">
+            <span className="results-card-label">correct words</span>
+            <span className="results-card-value">{stats.words}</span>
+          </div>
+          <div className="results-card secondary">
+            <span className="results-card-label">time</span>
+            <span className="results-card-value">{timeOption}s</span>
+          </div>
+          <div className="results-card wide">
+            <span className="results-card-label">characters</span>
+            <div className="results-chars">
+              <span className="results-char correct">{stats.correct}<small>correct</small></span>
+              <span className="results-char-sep">/</span>
+              <span className="results-char incorrect">{stats.incorrect}<small>incorrect</small></span>
+              <span className="results-char-sep">/</span>
+              <span className="results-char extra">{stats.extra}<small>extra</small></span>
+              <span className="results-char-sep">/</span>
+              <span className="results-char missed">{stats.missed}<small>missed</small></span>
+            </div>
           </div>
         </div>
         <div className="result-actions">
@@ -377,40 +431,53 @@ export default function Game() {
         onKeyDown={handleKeyDown}
       >
         {!isFocused && !finished && (
-          <div className="typing-focus-warning">Click here or press any key to focus</div>
+          <div className="typing-focus-warning">click here or press any key to start</div>
         )}
-        <div
-          className={`words-display ${!isFocused ? "words-blurred" : ""}`}
-          ref={wordsRef}
-          style={{ transition: "transform 0.15s ease" }}
-        >
-          {words.map((word, wi) => {
-            const extras = extraChars[wi] || "";
-            return (
-              <span key={wi} className={`word ${wi === currentWordIndex ? "active" : ""}`}>
-                {word.split("").map((ch, ci) => {
-                  const state = charStates[`${wi}-${ci}`];
-                  let className = "letter";
-                  if (state) className += ` ${state}`;
-                  return (
-                    <span key={ci} className={className}>
+        <div className="words-wrapper">
+          <div
+            className={`words-display ${!isFocused ? "words-blurred" : ""}`}
+            ref={wordsRef}
+            style={{ transition: "transform 0.15s ease" }}
+          >
+            {words.map((word, wi) => {
+              const extras = extraChars[wi] || "";
+              let wordClass = "word";
+              if (wi === currentWordIndex) {
+                wordClass += " active";
+              } else if (wi < currentWordIndex) {
+                const hasIncorrect = word.split("").some((ch, ci) => charStates[`${wi}-${ci}`] === "incorrect");
+                const hasMissed = word.split("").some((ch, ci) => !charStates[`${wi}-${ci}`]);
+                const hasExtra = extras.length > 0;
+                if (hasIncorrect || hasMissed || hasExtra) {
+                  wordClass += " word-error";
+                }
+              }
+              return (
+                <span key={wi} className={wordClass}>
+                  {word.split("").map((ch, ci) => {
+                    const state = charStates[`${wi}-${ci}`];
+                    let className = "letter";
+                    if (state) className += ` ${state}`;
+                    return (
+                      <span key={ci} className={className}>
+                        {ch}
+                      </span>
+                    );
+                  })}
+                  {extras.split("").map((ch, ei) => (
+                    <span key={`extra-${ei}`} className="letter extra">
                       {ch}
                     </span>
-                  );
-                })}
-                {extras.split("").map((ch, ei) => (
-                  <span key={`extra-${ei}`} className="letter extra">
-                    {ch}
-                  </span>
-                ))}
-              </span>
-            );
-          })}
+                  ))}
+                </span>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       <div style={{ color: "var(--sub-color)", fontSize: "0.7rem", marginTop: "30px", textAlign: "center" }}>
-        <span style={{ opacity: 0.6 }}>tab</span> — restart test &nbsp;|&nbsp; <span style={{ opacity: 0.6 }}>esc</span> — restart test
+        <span style={{ opacity: 0.6 }}>tab</span> — restart test
       </div>
     </>
   );

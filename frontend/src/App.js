@@ -1,10 +1,16 @@
-import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Game from "./pages/Game";
 import Leaderboard from "./pages/Leaderboard";
+import Profile from "./pages/Profile";
+import History from "./pages/History";
 import { isLoggedIn as checkAuth, logout, getUsername } from "./services/api";
 import "./App.css";
+
+function ProtectedRoute({ children }) {
+  return checkAuth() ? children : <Navigate to="/" replace />;
+}
 
 function Header() {
   const navigate = useNavigate();
@@ -24,8 +30,8 @@ function Header() {
   return (
     <header className="header">
       <Link to="/game" className="logo">
-        <span className="logo-icon">⌨️</span>
-        <span className="logo-text">monkey<span>type</span></span>
+        <span className="logo-icon">⌘</span>
+        <span className="logo-text">key<span>less</span></span>
       </Link>
       <nav className="nav-links">
         <Link
@@ -41,14 +47,33 @@ function Header() {
           ♛ leaderboard
         </Link>
         {loggedIn && (
-          <span className="nav-link" style={{ cursor: "default", color: "var(--sub-color)" }}>
-            {username || "user"}
-          </span>
+          <Link
+            to="/history"
+            className={`nav-link ${location.pathname === "/history" ? "active" : ""}`}
+          >
+            📊 history
+          </Link>
+        )}
+        {loggedIn && (
+          <Link
+            to="/profile"
+            className={`nav-link ${location.pathname === "/profile" ? "active" : ""}`}
+          >
+            ⚙ {username || "profile"}
+          </Link>
         )}
         {loggedIn && (
           <button className="nav-link" onClick={handleLogout}>
             ⏻ logout
           </button>
+        )}
+        {!loggedIn && (
+          <Link
+            to="/"
+            className={`nav-link ${location.pathname === "/" ? "active" : ""}`}
+          >
+            ⏻ login
+          </Link>
         )}
       </nav>
     </header>
@@ -66,10 +91,12 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/game" element={<Game />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
           </Routes>
         </main>
         <footer className="footer">
-          monkeytype clone — built with React & .NET
+          keyless — built with React & .NET
         </footer>
       </div>
     </BrowserRouter>
