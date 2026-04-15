@@ -424,6 +424,8 @@ FodyWeavers.xsd
 
 # EF Core migrations
 **/Migrations/
+!MonkeyType.Infrastructure/Migrations/
+!MonkeyType.Infrastructure/Migrations/*.cs
 
 # SQLite database files
 **/*.db

@@ -39,8 +39,11 @@ builder.Services.AddCors(options =>
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
 
+var apiProjectPath = SqliteConnectionStringResolver.ResolveApiProjectPath(builder.Environment.ContentRootPath);
+var resolvedConnectionString = SqliteConnectionStringResolver.Resolve(connectionString, apiProjectPath);
+
 builder.Services.AddDbContext<MonkeyTypeDatabaseContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseSqlite(resolvedConnectionString));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IStatisticsGameRepository, StatisticsGameRepository>();

@@ -14,7 +14,7 @@ namespace MonkeyType.Infrastructure.Repositories
         {
             _context = context;
         }
-
+    
         public async Task<IEnumerable<StatisticsGame>?> GetAllAsync()
         {
             return await _context.StatisticsGames
