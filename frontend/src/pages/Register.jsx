@@ -84,8 +84,9 @@ export default function Register() {
         <h1 className="auth-title">keyless</h1>
       </div>
 
-      <form onSubmit={handleRegister} className="auth-input-group">
+      <form onSubmit={handleRegister} className="auth-input-group" data-testid="register-form">
         <input
+          data-testid="register-username"
           className="auth-input"
           type="text"
           placeholder="username"
@@ -94,6 +95,7 @@ export default function Register() {
         />
 
         <input
+          data-testid="register-email"
           className="auth-input"
           type="email"
           placeholder="email"
@@ -102,6 +104,7 @@ export default function Register() {
         />
 
         <input
+          data-testid="register-confirm-email"
           className="auth-input"
           type="email"
           placeholder="confirm email"
@@ -110,6 +113,7 @@ export default function Register() {
         />
 
         <input
+          data-testid="register-password"
           className="auth-input"
           type="password"
           placeholder="password"
@@ -118,6 +122,7 @@ export default function Register() {
         />
 
         <input
+          data-testid="register-confirm-password"
           className="auth-input"
           type="password"
           placeholder="confirm password"
@@ -125,9 +130,9 @@ export default function Register() {
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
 
-        {error && <div className="auth-error">{error}</div>}
+        {error && <div className="auth-error" data-testid="register-error">{error}</div>}
 
-        <button className="auth-btn" type="submit" disabled={loading}>
+        <button className="auth-btn" type="submit" disabled={loading} data-testid="register-submit">
           {loading ? "creating account..." : "sign up"}
         </button>
       </form>

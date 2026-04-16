@@ -95,6 +95,18 @@ async function fetchUserStats(request, token) {
   return statsResponse.json();
 }
 
+async function fetchUserProfile(request, token) {
+  const payload = decodeJwt(token);
+  const profileResponse = await request.get(`${API_BASE_URL}/api/User/${payload.sub}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  expect(profileResponse.ok()).toBeTruthy();
+  return profileResponse.json();
+}
+
 module.exports = {
   API_BASE_URL,
   createCredentials,
@@ -105,4 +117,5 @@ module.exports = {
   completeTypingRun,
   getToken,
   fetchUserStats,
+  fetchUserProfile,
 };
