@@ -41,8 +41,9 @@ export default function Login() {
         <span style={{ fontSize: "2.4rem", color: "var(--main-color)" }}>⌘</span>
         <h1 className="auth-title">keyless</h1>
       </div>
-      <form onSubmit={handleLogin} className="auth-input-group">
+      <form onSubmit={handleLogin} className="auth-input-group" data-testid="login-form">
         <input
+          data-testid="login-username"
           className="auth-input"
           type="text"
           placeholder="username"
@@ -51,6 +52,7 @@ export default function Login() {
           autoComplete="username"
         />
         <input
+          data-testid="login-password"
           className="auth-input"
           type="password"
           placeholder="password"
@@ -58,8 +60,8 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
         />
-        <div className="auth-error">{error}</div>
-        <button className="auth-btn" type="submit" disabled={loading}>
+        <div className="auth-error" data-testid="login-error">{error}</div>
+        <button className="auth-btn" type="submit" disabled={loading} data-testid="login-submit">
           {loading ? "..." : "sign in"}
         </button>
       </form>

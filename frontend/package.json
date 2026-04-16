@@ -14,10 +14,17 @@
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:install": "playwright install chromium",
+    "e2e:report": "playwright show-report",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

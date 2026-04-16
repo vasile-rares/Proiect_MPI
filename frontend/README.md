@@ -19,6 +19,19 @@ You may also see any lint errors in the console.
 Launches the test runner in the interactive watch mode.\
 See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
+### `npm run e2e`
+
+Runs the initial Playwright end-to-end suite against the local React app and the .NET API.
+The runner starts the frontend on `http://localhost:3000`, starts the API on `http://localhost:5232`, and uses a dedicated SQLite database file named `MonkeyType.E2E.db`.
+
+Before the first run, install the browser dependency with:
+
+`npm run e2e:install`
+
+To inspect a failed run:
+
+`npm run e2e:report`
+
 ### `npm run build`
 
 Builds the app for production to the `build` folder.\
