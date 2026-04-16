@@ -28,20 +28,22 @@ function Header() {
   }
 
   return (
-    <header className="header">
-      <Link to="/game" className="logo">
+    <header className="header" data-testid="app-header">
+      <Link to="/game" className="logo" data-testid="nav-logo">
         <span className="logo-icon">⌘</span>
         <span className="logo-text">key<span>less</span></span>
       </Link>
       <nav className="nav-links">
         <Link
           to="/game"
+          data-testid="nav-game"
           className={`nav-link ${location.pathname === "/game" ? "active" : ""}`}
         >
           ⟳ test
         </Link>
         <Link
           to="/leaderboard"
+          data-testid="nav-leaderboard"
           className={`nav-link ${location.pathname === "/leaderboard" ? "active" : ""}`}
         >
           ♛ leaderboard
@@ -49,6 +51,7 @@ function Header() {
         {loggedIn && (
           <Link
             to="/history"
+            data-testid="nav-history"
             className={`nav-link ${location.pathname === "/history" ? "active" : ""}`}
           >
             📊 history
@@ -57,19 +60,21 @@ function Header() {
         {loggedIn && (
           <Link
             to="/profile"
+            data-testid="nav-profile"
             className={`nav-link ${location.pathname === "/profile" ? "active" : ""}`}
           >
             ⚙ {username || "profile"}
           </Link>
         )}
         {loggedIn && (
-          <button className="nav-link" onClick={handleLogout}>
+          <button className="nav-link" onClick={handleLogout} data-testid="nav-logout">
             ⏻ logout
           </button>
         )}
         {!loggedIn && (
           <Link
             to="/"
+            data-testid="nav-login"
             className={`nav-link ${location.pathname === "/" ? "active" : ""}`}
           >
             ⏻ login

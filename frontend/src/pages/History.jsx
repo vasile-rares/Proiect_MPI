@@ -55,18 +55,18 @@ export default function History() {
   };
 
   return (
-    <div className="history-container">
+    <div className="history-container" data-testid="history-view">
       <h1 className="leaderboard-title">game history</h1>
 
       {/* Game Detail Modal */}
       {selectedGame && (
-        <div className="modal-overlay" onClick={() => setSelectedGame(null)}>
+        <div className="modal-overlay" onClick={() => setSelectedGame(null)} data-testid="history-detail-modal-overlay">
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal-title">game details</h2>
-            <div className="detail-grid">
+            <h2 className="modal-title" data-testid="history-detail-title">game details</h2>
+            <div className="detail-grid" data-testid="history-detail-modal">
               <div className="detail-item">
                 <span className="detail-label">wpm</span>
-                <span className="detail-value highlight">{Math.round(selectedGame.wordsPerMinute)}</span>
+                <span className="detail-value highlight" data-testid="history-detail-wpm">{Math.round(selectedGame.wordsPerMinute)}</span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">raw wpm</span>
@@ -106,11 +106,11 @@ export default function History() {
               </div>
               <div className="detail-item">
                 <span className="detail-label">duration</span>
-                <span className="detail-value">{selectedGame.durationInSeconds}s</span>
+                <span className="detail-value" data-testid="history-detail-duration">{selectedGame.durationInSeconds}s</span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">mode</span>
-                <span className="detail-value">{selectedGame.mode}</span>
+                <span className="detail-value" data-testid="history-detail-mode">{selectedGame.mode}</span>
               </div>
               <div className="detail-item full-width">
                 <span className="detail-label">date</span>
@@ -118,16 +118,16 @@ export default function History() {
               </div>
             </div>
             <div className="modal-actions">
-              <button className="result-btn" onClick={() => setSelectedGame(null)}>close</button>
+              <button className="result-btn" onClick={() => setSelectedGame(null)} data-testid="history-detail-close">close</button>
             </div>
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className="leaderboard-empty">loading...</div>
+        <div className="leaderboard-empty" data-testid="history-loading">loading...</div>
       ) : data.length === 0 ? (
-        <div className="leaderboard-empty">
+        <div className="leaderboard-empty" data-testid="history-empty">
           no games yet —{" "}
           <span
             style={{ color: "var(--main-color)", cursor: "pointer" }}
@@ -138,7 +138,7 @@ export default function History() {
         </div>
       ) : (
         <>
-          <table className="leaderboard-table">
+          <table className="leaderboard-table" data-testid="history-table">
             <thead>
               <tr>
                 <th>#</th>
@@ -153,13 +153,13 @@ export default function History() {
             </thead>
             <tbody>
               {data.map((item, index) => (
-                <tr key={item.id || index}>
-                  <td className="rank-cell">{(pageNumber - 1) * pageSize + index + 1}</td>
-                  <td className="wpm-cell">{Math.round(item.wordsPerMinute)}</td>
+                <tr key={item.id || index} data-testid={`history-row-${index}`}>
+                  <td className="rank-cell" data-testid={`history-rank-${index}`}>{(pageNumber - 1) * pageSize + index + 1}</td>
+                  <td className="wpm-cell" data-testid={`history-wpm-${index}`}>{Math.round(item.wordsPerMinute)}</td>
                   <td style={{ color: "var(--text-color)" }}>{Math.round(item.rawWordsPerMinute)}</td>
                   <td className="accuracy-cell">{Math.round(item.accuracy)}%</td>
                   <td className="accuracy-cell">{Math.round(item.consistency)}%</td>
-                  <td style={{ color: "var(--sub-color)" }}>{item.durationInSeconds}s</td>
+                  <td style={{ color: "var(--sub-color)" }} data-testid={`history-duration-${index}`}>{item.durationInSeconds}s</td>
                   <td style={{ color: "var(--sub-color)", fontSize: "0.8rem" }}>
                     {formatDate(item.createdAt)}
                   </td>
@@ -168,6 +168,7 @@ export default function History() {
                       className="detail-btn"
                       onClick={() => viewDetail(item.id)}
                       disabled={detailLoading}
+                      data-testid={`history-detail-button-${index}`}
                     >
                       ⋯
                     </button>
