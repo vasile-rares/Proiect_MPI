@@ -32,3 +32,21 @@ test("login and complete the typing test happy path", async ({ page, request, ba
   expect(Array.isArray(statsBody.items)).toBeTruthy();
   expect(statsBody.items.length).toBeGreaterThan(0);
 });
+
+test("completed word counts even if the timer expires before space is pressed", async ({ page, request, baseURL }) => {
+  const credentials = createCredentials();
+
+  await registerUser(request, credentials);
+  await enableDeterministicGame(page, {
+    words: ["focus"],
+    timerTickMs: 80,
+  });
+  await loginThroughUi(page, baseURL, credentials);
+
+  await page.getByTestId("time-option-15").click();
+  await page.getByTestId("typing-area").click();
+  await page.keyboard.type("focus");
+
+  await expect(page.getByTestId("results-view")).toBeVisible();
+  await expect(page.getByTestId("result-correct-words")).toHaveText("1");
+});

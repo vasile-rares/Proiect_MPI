@@ -27,12 +27,13 @@ async function registerUser(request, credentials) {
   expect(registerResponse.ok(), await registerResponse.text()).toBeTruthy();
 }
 
-async function enableDeterministicGame(page) {
-  await page.addInitScript(() => {
-    window.__KEYLESS_E2E__ = {
-      words: ["focus", "speed", "rhythm", "flow"],
-      timerTickMs: 20,
-    };
+async function enableDeterministicGame(page, overrides = {}) {
+  await page.addInitScript((config) => {
+    window.__KEYLESS_E2E__ = config;
+  }, {
+    words: ["focus", "speed", "rhythm", "flow"],
+    timerTickMs: 20,
+    ...overrides,
   });
 }
 

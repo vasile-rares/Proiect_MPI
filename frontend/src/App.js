@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -5,7 +6,14 @@ import Game from "./pages/Game";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import History from "./pages/History";
-import { isLoggedIn as checkAuth, logout, getUsername } from "./services/api";
+import {
+  isLoggedIn as checkAuth,
+  logout,
+  getUsername,
+  getUserId,
+  getUserProfile,
+  PROFILE_UPDATED_EVENT,
+} from "./services/api";
 import "./App.css";
 
 function ProtectedRoute({ children }) {
@@ -16,10 +24,49 @@ function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const loggedIn = checkAuth();
-  const username = getUsername();
+  const userId = getUserId();
+  const [username, setUsername] = useState(() => getUsername());
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (!loggedIn || !userId) {
+      setUsername(null);
+      return undefined;
+    }
+
+    const tokenUsername = getUsername();
+    setUsername(tokenUsername);
+
+    getUserProfile(userId)
+      .then((profile) => {
+        if (!isCancelled) {
+          setUsername(profile?.username || tokenUsername);
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setUsername(tokenUsername);
+        }
+      });
+
+    const handleProfileUpdated = (event) => {
+      if (!isCancelled) {
+        setUsername(event.detail?.username || tokenUsername);
+      }
+    };
+
+    window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
+
+    return () => {
+      isCancelled = true;
+      window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
+    };
+  }, [loggedIn, userId]);
 
   const handleLogout = () => {
     logout();
+    setUsername(null);
     navigate("/");
   };
 

@@ -59,6 +59,12 @@ test("user can edit profile details and changes persist", async ({ page, request
   await expect(page.getByTestId("profile-username-value")).toHaveText(updatedProfile.username);
   await expect(page.getByTestId("profile-email-value")).toHaveText(updatedProfile.email);
   await expect(page.getByTestId("profile-biography-value")).toContainText(updatedProfile.biography);
+  await expect(page.getByTestId("nav-profile")).toContainText(updatedProfile.username);
+
+  await page.reload();
+  await expect(page).toHaveURL(/\/profile$/);
+  await expect(page.getByTestId("nav-profile")).toContainText(updatedProfile.username);
+  await expect(page.getByTestId("profile-username-value")).toHaveText(updatedProfile.username);
 
   const token = await getToken(page);
   const persistedProfile = await fetchUserProfile(request, token);

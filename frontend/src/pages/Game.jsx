@@ -154,6 +154,10 @@ export default function Game() {
   };
 
   const finishTest = useCallback(async () => {
+    if (finishedRef.current) {
+      return;
+    }
+
     clearInterval(timerRef.current);
     finishedRef.current = true;
     setFinished(true);
@@ -162,6 +166,19 @@ export default function Game() {
     const currentCi = currentCharIndexRef.current;
     const wordsList = wordsListRef.current;
     const currentWord = wordsList[currentWi];
+    const currentWordExtras = extraCharsMapRef.current[currentWi] || "";
+
+    const currentWordCompletedCorrectly = Boolean(
+      currentWord
+      && currentCi === currentWord.length
+      && currentWordExtras.length === 0
+      && currentWord.split("").every((ch, i) => charStatesRef.current[`${currentWi}-${i}`] === "correct")
+    );
+
+    if (currentWordCompletedCorrectly) {
+      correctWordsRef.current++;
+    }
+
     if (currentWord && currentCi < currentWord.length) {
       missedCharsRef.current += currentWord.length - currentCi;
     }
@@ -395,7 +412,7 @@ export default function Game() {
           </div>
           <div className="results-card secondary">
             <span className="results-card-label">correct words</span>
-            <span className="results-card-value">{stats.words}</span>
+            <span className="results-card-value" data-testid="result-correct-words">{stats.words}</span>
           </div>
           <div className="results-card secondary">
             <span className="results-card-label">time</span>

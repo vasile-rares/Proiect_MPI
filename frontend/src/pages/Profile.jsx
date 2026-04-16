@@ -7,6 +7,7 @@ import {
   deleteUserAccount,
   getUserStatsAggregate,
   logout,
+  PROFILE_UPDATED_EVENT,
 } from "../services/api";
 
 export default function Profile() {
@@ -88,11 +89,20 @@ export default function Profile() {
         testsCompleted: profile.testsCompleted,
         biography: editBiography || null,
       });
-      setProfile((prev) => ({
-        ...prev,
+
+      const refreshedProfile = await getUserProfile(userId).catch(() => null);
+      const nextProfile = refreshedProfile || {
+        ...profile,
         username: editUsername,
         email: editEmail,
         biography: editBiography || null,
+      };
+
+      setProfile(nextProfile);
+      window.dispatchEvent(new CustomEvent(PROFILE_UPDATED_EVENT, {
+        detail: {
+          username: nextProfile.username,
+        },
       }));
       setEditing(false);
       setSuccess("Profile updated successfully");
@@ -210,7 +220,7 @@ export default function Profile() {
             </div>
           </>
         ) : (
-          <form onSubmit={handleSave} className="profile-edit-form" data-testid="profile-edit-form">
+          <form id="profile-edit-form" onSubmit={handleSave} className="profile-edit-form" data-testid="profile-edit-form">
             <div className="profile-field">
               <span className="profile-field-label">username</span>
               <input
@@ -252,30 +262,32 @@ export default function Profile() {
 
         <div className="profile-actions">
           {!editing ? (
-            <>
-              <button className="result-btn" onClick={handleEdit} data-testid="profile-edit-button">✎ edit profile</button>
-              <button className="result-btn" onClick={() => navigate("/history")} data-testid="profile-history-button">📊 game history</button>
+            <div key="view-actions" className="profile-actions-group">
+              <button type="button" className="result-btn" onClick={handleEdit} data-testid="profile-edit-button">✎ edit profile</button>
+              <button type="button" className="result-btn" onClick={() => navigate("/history")} data-testid="profile-history-button">📊 game history</button>
               <button
+                type="button"
                 className="result-btn profile-delete-btn"
                 onClick={() => setShowDeleteConfirm(true)}
                 data-testid="profile-delete-button"
               >
                 ✕ delete account
               </button>
-            </>
+            </div>
           ) : (
-            <>
+            <div key="edit-actions" className="profile-actions-group">
               <button
                 className="auth-btn"
-                onClick={handleSave}
+                type="submit"
+                form="profile-edit-form"
                 disabled={saving}
                 style={{ flex: 1 }}
                 data-testid="profile-save-button"
               >
                 {saving ? "saving..." : "save changes"}
               </button>
-              <button className="result-btn" onClick={handleCancel} data-testid="profile-cancel-button">cancel</button>
-            </>
+              <button type="button" className="result-btn" onClick={handleCancel} data-testid="profile-cancel-button">cancel</button>
+            </div>
           )}
         </div>
       </div>

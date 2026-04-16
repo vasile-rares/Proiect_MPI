@@ -1,4 +1,5 @@
 const API_URL = "/api";
+export const PROFILE_UPDATED_EVENT = "keyless:profile-updated";
 
 function parseJwt(token) {
   try {
