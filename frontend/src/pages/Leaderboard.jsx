@@ -30,7 +30,7 @@ export default function Leaderboard() {
   };
 
   return (
-    <div className="leaderboard-container">
+    <div className="leaderboard-container" data-testid="leaderboard-view">
       <h1 className="leaderboard-title">leaderboard</h1>
 
       <div className="test-config" style={{ marginBottom: "20px" }}>
@@ -39,6 +39,7 @@ export default function Leaderboard() {
           {SCOPE_OPTIONS.map((s) => (
             <button
               key={s}
+              data-testid={`leaderboard-scope-${s}`}
               className={`config-btn ${scope === s ? "active" : ""}`}
               onClick={() => setScope(s)}
             >
@@ -51,6 +52,7 @@ export default function Leaderboard() {
           {DURATION_OPTIONS.map((d) => (
             <button
               key={d}
+              data-testid={`leaderboard-duration-${d}`}
               className={`config-btn ${duration === d ? "active" : ""}`}
               onClick={() => setDuration(d)}
             >
@@ -61,11 +63,11 @@ export default function Leaderboard() {
       </div>
 
       {loading ? (
-        <div className="leaderboard-empty">loading...</div>
+        <div className="leaderboard-empty" data-testid="leaderboard-loading">loading...</div>
       ) : data.length === 0 ? (
-        <div className="leaderboard-empty">no scores yet — be the first!</div>
+        <div className="leaderboard-empty" data-testid="leaderboard-empty">no scores yet — be the first!</div>
       ) : (
-        <table className="leaderboard-table">
+        <table className="leaderboard-table" data-testid="leaderboard-table">
           <thead>
             <tr>
               <th>#</th>
@@ -79,20 +81,24 @@ export default function Leaderboard() {
           </thead>
           <tbody>
             {data.map((item, index) => (
-              <tr key={index} className={item.userId === myUserId ? "my-row" : ""}>
-                <td className={`rank-cell ${getRankClass(index)}`}>
+              <tr
+                key={index}
+                className={item.userId === myUserId ? "my-row" : ""}
+                data-testid={item.userId === myUserId ? "leaderboard-my-row" : `leaderboard-row-${index}`}
+              >
+                <td className={`rank-cell ${getRankClass(index)}`} data-testid={item.userId === myUserId ? "leaderboard-my-rank" : `leaderboard-rank-${index}`}>
                   {index + 1}
                 </td>
-                <td className="username-cell">
+                <td className="username-cell" data-testid={item.userId === myUserId ? "leaderboard-my-username" : `leaderboard-username-${index}`}>
                   {item.userId === myUserId ? myUsername || "you" : `player ${index + 1}`}
                 </td>
-                <td className="wpm-cell">
+                <td className="wpm-cell" data-testid={item.userId === myUserId ? "leaderboard-my-wpm" : `leaderboard-wpm-${index}`}>
                   {item.wordsPerMinute != null ? Math.round(item.wordsPerMinute) : "—"}
                 </td>
                 <td className="accuracy-cell">
                   {item.accuracy != null ? `${Math.round(item.accuracy)}%` : "—"}
                 </td>
-                <td style={{ color: "var(--sub-color)" }}>{item.durationInSeconds}s</td>
+                <td style={{ color: "var(--sub-color)" }} data-testid={item.userId === myUserId ? "leaderboard-my-duration" : `leaderboard-duration-value-${index}`}>{item.durationInSeconds}s</td>
                 <td style={{ color: "var(--sub-color)" }}>{item.mode || "—"}</td>
                 <td style={{ color: "var(--sub-color)", fontSize: "0.8rem" }}>
                   {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"}

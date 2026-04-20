@@ -27,7 +27,27 @@ const wordBank = [
   "together", "social", "problem", "write", "seem", "call", "case", "enough"
 ];
 
+const E2E_CONFIG_KEY = "__KEYLESS_E2E__";
+
+function getE2EConfig() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window[E2E_CONFIG_KEY] ?? null;
+}
+
+function getTimerTickMs() {
+  const configuredTick = Number(getE2EConfig()?.timerTickMs);
+  return Number.isFinite(configuredTick) && configuredTick > 0 ? configuredTick : 1000;
+}
+
 function generateWords(count = 50) {
+  const configuredWords = getE2EConfig()?.words;
+  if (Array.isArray(configuredWords) && configuredWords.length > 0) {
+    return Array.from({ length: count }, (_, index) => configuredWords[index % configuredWords.length]);
+  }
+
   const words = [];
   for (let i = 0; i < count; i++) {
     words.push(wordBank[Math.floor(Math.random() * wordBank.length)]);
@@ -68,6 +88,7 @@ export default function Game() {
   const startedRef = useRef(false);
   const finishedRef = useRef(false);
   const scrollLineRef = useRef(0);
+  const timerTickMsRef = useRef(getTimerTickMs());
 
   const resetTest = useCallback(() => {
     clearInterval(timerRef.current);
@@ -133,6 +154,10 @@ export default function Game() {
   };
 
   const finishTest = useCallback(async () => {
+    if (finishedRef.current) {
+      return;
+    }
+
     clearInterval(timerRef.current);
     finishedRef.current = true;
     setFinished(true);
@@ -141,6 +166,19 @@ export default function Game() {
     const currentCi = currentCharIndexRef.current;
     const wordsList = wordsListRef.current;
     const currentWord = wordsList[currentWi];
+    const currentWordExtras = extraCharsMapRef.current[currentWi] || "";
+
+    const currentWordCompletedCorrectly = Boolean(
+      currentWord
+      && currentCi === currentWord.length
+      && currentWordExtras.length === 0
+      && currentWord.split("").every((ch, i) => charStatesRef.current[`${currentWi}-${i}`] === "correct")
+    );
+
+    if (currentWordCompletedCorrectly) {
+      correctWordsRef.current++;
+    }
+
     if (currentWord && currentCi < currentWord.length) {
       missedCharsRef.current += currentWord.length - currentCi;
     }
@@ -204,7 +242,7 @@ export default function Game() {
           }
           return prev - 1;
         });
-      }, 1000);
+      }, timerTickMsRef.current);
     }
     return () => clearInterval(timerRef.current);
   }, [started, finished, finishTest]);
@@ -354,19 +392,19 @@ export default function Game() {
 
   if (finished && stats) {
     return (
-      <div className="results-container">
+      <div className="results-container" data-testid="results-view">
         <div className="results-grid">
           <div className="results-card primary">
             <span className="results-card-label">wpm</span>
-            <span className="results-card-value accent">{stats.wpm}</span>
+            <span className="results-card-value accent" data-testid="result-wpm">{stats.wpm}</span>
           </div>
           <div className="results-card primary">
             <span className="results-card-label">accuracy</span>
-            <span className="results-card-value accent">{stats.accuracy}%</span>
+            <span className="results-card-value accent" data-testid="result-accuracy">{stats.accuracy}%</span>
           </div>
           <div className="results-card primary">
             <span className="results-card-label">consistency</span>
-            <span className="results-card-value accent">{stats.consistency}%</span>
+            <span className="results-card-value accent" data-testid="result-consistency">{stats.consistency}%</span>
           </div>
           <div className="results-card secondary">
             <span className="results-card-label">raw wpm</span>
@@ -374,7 +412,7 @@ export default function Game() {
           </div>
           <div className="results-card secondary">
             <span className="results-card-label">correct words</span>
-            <span className="results-card-value">{stats.words}</span>
+            <span className="results-card-value" data-testid="result-correct-words">{stats.words}</span>
           </div>
           <div className="results-card secondary">
             <span className="results-card-label">time</span>
@@ -394,8 +432,8 @@ export default function Game() {
           </div>
         </div>
         <div className="result-actions">
-          <button className="result-btn" onClick={resetTest}>⟳ next test</button>
-          <button className="result-btn" onClick={() => navigate("/leaderboard")}>♛ leaderboard</button>
+          <button className="result-btn" onClick={resetTest} data-testid="result-next-test">⟳ next test</button>
+          <button className="result-btn" onClick={() => navigate("/leaderboard")} data-testid="result-leaderboard">♛ leaderboard</button>
         </div>
       </div>
     );
@@ -409,6 +447,7 @@ export default function Game() {
           {TIME_OPTIONS.map((t) => (
             <button
               key={t}
+              data-testid={`time-option-${t}`}
               className={`config-btn ${timeOption === t ? "active" : ""}`}
               onClick={() => changeTimeOption(t)}
             >
@@ -418,12 +457,13 @@ export default function Game() {
         </div>
       </div>
 
-      <div className="timer-display">
+      <div className="timer-display" data-testid="timer-display">
         {started ? timeLeft : ""}
       </div>
 
       <div
         className="typing-area"
+        data-testid="typing-area"
         tabIndex={0}
         ref={typingRef}
         onFocus={() => setIsFocused(true)}
@@ -436,6 +476,7 @@ export default function Game() {
         <div className="words-wrapper">
           <div
             className={`words-display ${!isFocused ? "words-blurred" : ""}`}
+            data-testid="words-display"
             ref={wordsRef}
             style={{ transition: "transform 0.15s ease" }}
           >
@@ -453,7 +494,7 @@ export default function Game() {
                 }
               }
               return (
-                <span key={wi} className={wordClass}>
+                <span key={wi} className={wordClass} data-testid={wi === currentWordIndex ? "active-word" : undefined}>
                   {word.split("").map((ch, ci) => {
                     const state = charStates[`${wi}-${ci}`];
                     let className = "letter";

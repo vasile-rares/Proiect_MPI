@@ -7,6 +7,7 @@ import {
   deleteUserAccount,
   getUserStatsAggregate,
   logout,
+  PROFILE_UPDATED_EVENT,
 } from "../services/api";
 
 export default function Profile() {
@@ -88,11 +89,20 @@ export default function Profile() {
         testsCompleted: profile.testsCompleted,
         biography: editBiography || null,
       });
-      setProfile((prev) => ({
-        ...prev,
+
+      const refreshedProfile = await getUserProfile(userId).catch(() => null);
+      const nextProfile = refreshedProfile || {
+        ...profile,
         username: editUsername,
         email: editEmail,
         biography: editBiography || null,
+      };
+
+      setProfile(nextProfile);
+      window.dispatchEvent(new CustomEvent(PROFILE_UPDATED_EVENT, {
+        detail: {
+          username: nextProfile.username,
+        },
       }));
       setEditing(false);
       setSuccess("Profile updated successfully");
@@ -115,22 +125,22 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="profile-container">
-        <div className="leaderboard-empty">loading...</div>
+      <div className="profile-container" data-testid="profile-view">
+        <div className="leaderboard-empty" data-testid="profile-loading">loading...</div>
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="profile-container">
-        <div className="leaderboard-empty">could not load profile</div>
+      <div className="profile-container" data-testid="profile-view">
+        <div className="leaderboard-empty" data-testid="profile-empty">could not load profile</div>
       </div>
     );
   }
 
   return (
-    <div className="profile-container">
+    <div className="profile-container" data-testid="profile-view">
       <h1 className="profile-title">profile</h1>
 
       {/* Stats Aggregate Section */}
@@ -188,32 +198,33 @@ export default function Profile() {
           <>
             <div className="profile-field">
               <span className="profile-field-label">username</span>
-              <span className="profile-field-value">{profile.username}</span>
+              <span className="profile-field-value" data-testid="profile-username-value">{profile.username}</span>
             </div>
             <div className="profile-field">
               <span className="profile-field-label">email</span>
-              <span className="profile-field-value">{profile.email}</span>
+              <span className="profile-field-value" data-testid="profile-email-value">{profile.email}</span>
             </div>
             <div className="profile-field">
               <span className="profile-field-label">biography</span>
-              <span className="profile-field-value">
+              <span className="profile-field-value" data-testid="profile-biography-value">
                 {profile.biography || <span style={{ color: "var(--sub-color)" }}>no biography set</span>}
               </span>
             </div>
             <div className="profile-field">
               <span className="profile-field-label">tests started</span>
-              <span className="profile-field-value">{profile.testsStarted}</span>
+              <span className="profile-field-value" data-testid="profile-tests-started">{profile.testsStarted}</span>
             </div>
             <div className="profile-field">
               <span className="profile-field-label">tests completed</span>
-              <span className="profile-field-value">{profile.testsCompleted}</span>
+              <span className="profile-field-value" data-testid="profile-tests-completed">{profile.testsCompleted}</span>
             </div>
           </>
         ) : (
-          <form onSubmit={handleSave} className="profile-edit-form">
+          <form id="profile-edit-form" onSubmit={handleSave} className="profile-edit-form" data-testid="profile-edit-form">
             <div className="profile-field">
               <span className="profile-field-label">username</span>
               <input
+                data-testid="profile-edit-username"
                 className="auth-input"
                 type="text"
                 value={editUsername}
@@ -224,6 +235,7 @@ export default function Profile() {
             <div className="profile-field">
               <span className="profile-field-label">email</span>
               <input
+                data-testid="profile-edit-email"
                 className="auth-input"
                 type="email"
                 value={editEmail}
@@ -234,6 +246,7 @@ export default function Profile() {
             <div className="profile-field">
               <span className="profile-field-label">biography</span>
               <textarea
+                data-testid="profile-edit-biography"
                 className="auth-input profile-textarea"
                 value={editBiography}
                 onChange={(e) => setEditBiography(e.target.value)}
@@ -244,33 +257,37 @@ export default function Profile() {
           </form>
         )}
 
-        {error && <div className="auth-error">{error}</div>}
-        {success && <div className="profile-success">{success}</div>}
+        {error && <div className="auth-error" data-testid="profile-error">{error}</div>}
+        {success && <div className="profile-success" data-testid="profile-success">{success}</div>}
 
         <div className="profile-actions">
           {!editing ? (
-            <>
-              <button className="result-btn" onClick={handleEdit}>✎ edit profile</button>
-              <button className="result-btn" onClick={() => navigate("/history")}>📊 game history</button>
+            <div key="view-actions" className="profile-actions-group">
+              <button type="button" className="result-btn" onClick={handleEdit} data-testid="profile-edit-button">✎ edit profile</button>
+              <button type="button" className="result-btn" onClick={() => navigate("/history")} data-testid="profile-history-button">📊 game history</button>
               <button
+                type="button"
                 className="result-btn profile-delete-btn"
                 onClick={() => setShowDeleteConfirm(true)}
+                data-testid="profile-delete-button"
               >
                 ✕ delete account
               </button>
-            </>
+            </div>
           ) : (
-            <>
+            <div key="edit-actions" className="profile-actions-group">
               <button
                 className="auth-btn"
-                onClick={handleSave}
+                type="submit"
+                form="profile-edit-form"
                 disabled={saving}
                 style={{ flex: 1 }}
+                data-testid="profile-save-button"
               >
                 {saving ? "saving..." : "save changes"}
               </button>
-              <button className="result-btn" onClick={handleCancel}>cancel</button>
-            </>
+              <button type="button" className="result-btn" onClick={handleCancel} data-testid="profile-cancel-button">cancel</button>
+            </div>
           )}
         </div>
       </div>

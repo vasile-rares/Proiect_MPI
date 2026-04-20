@@ -6,6 +6,9 @@
 MonkeyType.Infrastructure/MonkeyType.db
 MonkeyType.Infrastructure/MonkeyType.db-shm
 MonkeyType.Infrastructure/MonkeyType.db-wal
+MonkeyType.Infrastructure/MonkeyType.E2E.db
+MonkeyType.Infrastructure/MonkeyType.E2E.db-shm
+MonkeyType.Infrastructure/MonkeyType.E2E.db-wal
 
 # IDE/editor
 .vs/
@@ -16,6 +19,9 @@ MonkeyType.Infrastructure/MonkeyType.db-wal
 # Logs and caches
 *.log
 *.cache
+frontend/playwright-report/
+frontend/test-results/
+frontend/.playwright/
 
 # EF migrations (optional – uncomment if you prefer not to track)
 MonkeyType.Infrastructure/Migrations/
@@ -424,6 +430,8 @@ FodyWeavers.xsd
 
 # EF Core migrations
 **/Migrations/
+!MonkeyType.Infrastructure/Migrations/
+!MonkeyType.Infrastructure/Migrations/*.cs
 
 # SQLite database files
 **/*.db

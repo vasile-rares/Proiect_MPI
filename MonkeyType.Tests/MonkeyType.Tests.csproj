@@ -12,7 +12,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MonkeyType.Application\MonkeyType.Application.csproj" />
     <ProjectReference Include="..\MonkeyType.Domain\MonkeyType.Domain.csproj" />
+    <ProjectReference Include="..\MonkeyType.Infrastructure\MonkeyType.Infrastructure.csproj" />
     <ProjectReference Include="..\MonkeyType.Shared\MonkeyType.Shared.csproj" />
   </ItemGroup>
 
