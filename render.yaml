@@ -27,19 +27,16 @@ services:
     - type: web
       name: keyless-backend
       runtime: docker
+      plan: free
       rootDir: backend
       dockerfilePath: backend/Dockerfile
       dockerContext: backend
       healthCheckPath: /health
       autoDeployTrigger: off
 
-      disk:
-          name: keyless-data
-          mountPath: /data
-
       envVars:
           - key: ConnectionStrings__DefaultConnection
-            value: Data Source=/data/Keyless.db
+            value: Data Source=/tmp/Keyless.db
           - key: Jwt__Key
             generateValue: true
           - key: Jwt__Issuer
