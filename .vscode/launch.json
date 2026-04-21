@@ -30,7 +30,7 @@
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",
-            "runtimeArgs": ["start"],
+            "runtimeArgs": ["run", "dev"],
             "cwd": "${workspaceFolder}/frontend",
             "console": "integratedTerminal",
             "serverReadyAction": {

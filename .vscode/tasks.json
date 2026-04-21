@@ -31,7 +31,7 @@
         {
             "label": "frontend: start",
             "type": "shell",
-            "command": "npm start",
+            "command": "npm run dev",
             "options": {
                 "cwd": "${workspaceFolder}/frontend"
             },
