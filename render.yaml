@@ -21,6 +21,8 @@ services:
             value: no-cache, no-store, must-revalidate
 
       envVars:
+          - key: NODE_VERSION
+            value: 20.19.0
           - key: VITE_API_URL
             value: https://keyless-backend.onrender.com/api
 
