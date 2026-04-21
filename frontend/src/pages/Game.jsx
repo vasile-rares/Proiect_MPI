@@ -193,7 +193,7 @@ export default function Game() {
       : 0;
     const consistency = rawWpm > 0 ? Math.round((wpm / rawWpm) * 100) : 0;
 
-    setStats({
+    const computedStats = {
       wpm,
       rawWpm,
       accuracy,
@@ -203,7 +203,7 @@ export default function Game() {
       extra: extraCharsRef.current,
       missed: missedCharsRef.current,
       words: correctWordsRef.current,
-    });
+    };
 
     const userId = getUserId();
     if (userId) {
@@ -230,6 +230,8 @@ export default function Game() {
         console.error("Failed to save score:", e);
       }
     }
+
+    setStats(computedStats);
   }, [timeOption]);
 
   useEffect(() => {
