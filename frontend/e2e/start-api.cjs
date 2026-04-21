@@ -3,8 +3,8 @@ const path = require("path");
 const { spawn } = require("child_process");
 
 const workspaceRoot = path.resolve(__dirname, "..", "..");
-const apiDirectory = path.join(workspaceRoot, "MonkeyType.API");
-const databasePath = path.join(workspaceRoot, "MonkeyType.Infrastructure", "MonkeyType.E2E.db");
+const apiDirectory = path.join(workspaceRoot, "backend", "MonkeyType.API");
+const databasePath = path.join(workspaceRoot, "backend", "MonkeyType.Infrastructure", "MonkeyType.E2E.db");
 
 for (const filePath of [databasePath, `${databasePath}-shm`, `${databasePath}-wal`]) {
   try {
