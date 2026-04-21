@@ -16,12 +16,13 @@ export default function Profile() {
 
   const [profile, setProfile] = useState(null);
   const [aggregate, setAggregate] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [loadedUserId, setLoadedUserId] = useState(null);
+  const loading = Boolean(userId) && loadedUserId !== userId;
 
   // Edit form state
   const [editUsername, setEditUsername] = useState("");
@@ -33,11 +34,17 @@ export default function Profile() {
       navigate("/");
       return;
     }
-    setLoading(true);
+
+    let isCancelled = false;
+
     Promise.all([
       getUserProfile(userId).catch(() => null),
       getUserStatsAggregate(userId).catch(() => null),
     ]).then(([prof, agg]) => {
+      if (isCancelled) {
+        return;
+      }
+
       setProfile(prof);
       setAggregate(agg);
       if (prof) {
@@ -45,8 +52,13 @@ export default function Profile() {
         setEditEmail(prof.email || "");
         setEditBiography(prof.biography || "");
       }
-      setLoading(false);
+
+      setLoadedUserId(userId);
     });
+
+    return () => {
+      isCancelled = true;
+    };
   }, [userId, navigate]);
 
   const handleEdit = () => {
@@ -99,11 +111,13 @@ export default function Profile() {
       };
 
       setProfile(nextProfile);
-      window.dispatchEvent(new CustomEvent(PROFILE_UPDATED_EVENT, {
-        detail: {
-          username: nextProfile.username,
-        },
-      }));
+      window.dispatchEvent(
+        new CustomEvent(PROFILE_UPDATED_EVENT, {
+          detail: {
+            username: nextProfile.username,
+          },
+        }),
+      );
       setEditing(false);
       setSuccess("Profile updated successfully");
     } catch (err) {
@@ -126,7 +140,9 @@ export default function Profile() {
   if (loading) {
     return (
       <div className="profile-container" data-testid="profile-view">
-        <div className="leaderboard-empty" data-testid="profile-loading">loading...</div>
+        <div className="leaderboard-empty" data-testid="profile-loading">
+          loading...
+        </div>
       </div>
     );
   }
@@ -134,7 +150,9 @@ export default function Profile() {
   if (!profile) {
     return (
       <div className="profile-container" data-testid="profile-view">
-        <div className="leaderboard-empty" data-testid="profile-empty">could not load profile</div>
+        <div className="leaderboard-empty" data-testid="profile-empty">
+          could not load profile
+        </div>
       </div>
     );
   }
@@ -147,48 +165,71 @@ export default function Profile() {
       {aggregate && (
         <>
           <div className="profile-stats-grid">
-          <div className="profile-stat-card">
-            <span className="profile-stat-label">games played</span>
-            <span className="profile-stat-value">{aggregate.gamesCount}</span>
+            <div className="profile-stat-card">
+              <span className="profile-stat-label">games played</span>
+              <span className="profile-stat-value">{aggregate.gamesCount}</span>
+            </div>
+            <div className="profile-stat-card">
+              <span className="profile-stat-label">best wpm</span>
+              <span className="profile-stat-value accent">
+                {Math.round(aggregate.highestWordsPerMinute)}
+              </span>
+            </div>
+            <div className="profile-stat-card">
+              <span className="profile-stat-label">avg wpm</span>
+              <span className="profile-stat-value">
+                {Math.round(aggregate.averageWordsPerMinute)}
+              </span>
+            </div>
+            <div className="profile-stat-card">
+              <span className="profile-stat-label">best raw wpm</span>
+              <span className="profile-stat-value accent">
+                {Math.round(aggregate.highestRawWordsPerMinute || 0)}
+              </span>
+            </div>
+            <div className="profile-stat-card">
+              <span className="profile-stat-label">avg raw wpm</span>
+              <span className="profile-stat-value">
+                {Math.round(aggregate.averageRawWordsPerMinute || 0)}
+              </span>
+            </div>
+            <div className="profile-stat-card">
+              <span className="profile-stat-label">best accuracy</span>
+              <span className="profile-stat-value accent">
+                {Math.round(aggregate.highestAccuracy)}%
+              </span>
+            </div>
+            <div className="profile-stat-card">
+              <span className="profile-stat-label">avg accuracy</span>
+              <span className="profile-stat-value">
+                {Math.round(aggregate.averageAccuracy)}%
+              </span>
+            </div>
+            <div className="profile-stat-card">
+              <span className="profile-stat-label">best consistency</span>
+              <span className="profile-stat-value accent">
+                {Math.round(aggregate.highestConsistency || 0)}%
+              </span>
+            </div>
+            <div className="profile-stat-card">
+              <span className="profile-stat-label">avg consistency</span>
+              <span className="profile-stat-value">
+                {Math.round(aggregate.averageConsistency)}%
+              </span>
+            </div>
           </div>
-          <div className="profile-stat-card">
-            <span className="profile-stat-label">best wpm</span>
-            <span className="profile-stat-value accent">{Math.round(aggregate.highestWordsPerMinute)}</span>
-          </div>
-          <div className="profile-stat-card">
-            <span className="profile-stat-label">avg wpm</span>
-            <span className="profile-stat-value">{Math.round(aggregate.averageWordsPerMinute)}</span>
-          </div>
-          <div className="profile-stat-card">
-            <span className="profile-stat-label">best raw wpm</span>
-            <span className="profile-stat-value accent">{Math.round(aggregate.highestRawWordsPerMinute || 0)}</span>
-          </div>
-          <div className="profile-stat-card">
-            <span className="profile-stat-label">avg raw wpm</span>
-            <span className="profile-stat-value">{Math.round(aggregate.averageRawWordsPerMinute || 0)}</span>
-          </div>
-          <div className="profile-stat-card">
-            <span className="profile-stat-label">best accuracy</span>
-            <span className="profile-stat-value accent">{Math.round(aggregate.highestAccuracy)}%</span>
-          </div>
-          <div className="profile-stat-card">
-            <span className="profile-stat-label">avg accuracy</span>
-            <span className="profile-stat-value">{Math.round(aggregate.averageAccuracy)}%</span>
-          </div>
-          <div className="profile-stat-card">
-            <span className="profile-stat-label">best consistency</span>
-            <span className="profile-stat-value accent">{Math.round(aggregate.highestConsistency || 0)}%</span>
-          </div>
-          <div className="profile-stat-card">
-            <span className="profile-stat-label">avg consistency</span>
-            <span className="profile-stat-value">{Math.round(aggregate.averageConsistency)}%</span>
-          </div>
-        </div>
-        {aggregate.updatedAt && (
-          <div style={{ color: "var(--sub-color)", fontSize: "0.65rem", textAlign: "right", marginTop: "6px" }}>
-            last updated: {new Date(aggregate.updatedAt).toLocaleDateString()}
-          </div>
-        )}
+          {aggregate.updatedAt && (
+            <div
+              style={{
+                color: "var(--sub-color)",
+                fontSize: "0.65rem",
+                textAlign: "right",
+                marginTop: "6px",
+              }}
+            >
+              last updated: {new Date(aggregate.updatedAt).toLocaleDateString()}
+            </div>
+          )}
         </>
       )}
 
@@ -198,29 +239,61 @@ export default function Profile() {
           <>
             <div className="profile-field">
               <span className="profile-field-label">username</span>
-              <span className="profile-field-value" data-testid="profile-username-value">{profile.username}</span>
+              <span
+                className="profile-field-value"
+                data-testid="profile-username-value"
+              >
+                {profile.username}
+              </span>
             </div>
             <div className="profile-field">
               <span className="profile-field-label">email</span>
-              <span className="profile-field-value" data-testid="profile-email-value">{profile.email}</span>
+              <span
+                className="profile-field-value"
+                data-testid="profile-email-value"
+              >
+                {profile.email}
+              </span>
             </div>
             <div className="profile-field">
               <span className="profile-field-label">biography</span>
-              <span className="profile-field-value" data-testid="profile-biography-value">
-                {profile.biography || <span style={{ color: "var(--sub-color)" }}>no biography set</span>}
+              <span
+                className="profile-field-value"
+                data-testid="profile-biography-value"
+              >
+                {profile.biography || (
+                  <span style={{ color: "var(--sub-color)" }}>
+                    no biography set
+                  </span>
+                )}
               </span>
             </div>
             <div className="profile-field">
               <span className="profile-field-label">tests started</span>
-              <span className="profile-field-value" data-testid="profile-tests-started">{profile.testsStarted}</span>
+              <span
+                className="profile-field-value"
+                data-testid="profile-tests-started"
+              >
+                {profile.testsStarted}
+              </span>
             </div>
             <div className="profile-field">
               <span className="profile-field-label">tests completed</span>
-              <span className="profile-field-value" data-testid="profile-tests-completed">{profile.testsCompleted}</span>
+              <span
+                className="profile-field-value"
+                data-testid="profile-tests-completed"
+              >
+                {profile.testsCompleted}
+              </span>
             </div>
           </>
         ) : (
-          <form id="profile-edit-form" onSubmit={handleSave} className="profile-edit-form" data-testid="profile-edit-form">
+          <form
+            id="profile-edit-form"
+            onSubmit={handleSave}
+            className="profile-edit-form"
+            data-testid="profile-edit-form"
+          >
             <div className="profile-field">
               <span className="profile-field-label">username</span>
               <input
@@ -257,14 +330,36 @@ export default function Profile() {
           </form>
         )}
 
-        {error && <div className="auth-error" data-testid="profile-error">{error}</div>}
-        {success && <div className="profile-success" data-testid="profile-success">{success}</div>}
+        {error && (
+          <div className="auth-error" data-testid="profile-error">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="profile-success" data-testid="profile-success">
+            {success}
+          </div>
+        )}
 
         <div className="profile-actions">
           {!editing ? (
             <div key="view-actions" className="profile-actions-group">
-              <button type="button" className="result-btn" onClick={handleEdit} data-testid="profile-edit-button">✎ edit profile</button>
-              <button type="button" className="result-btn" onClick={() => navigate("/history")} data-testid="profile-history-button">📊 game history</button>
+              <button
+                type="button"
+                className="result-btn"
+                onClick={handleEdit}
+                data-testid="profile-edit-button"
+              >
+                ✎ edit profile
+              </button>
+              <button
+                type="button"
+                className="result-btn"
+                onClick={() => navigate("/history")}
+                data-testid="profile-history-button"
+              >
+                📊 game history
+              </button>
               <button
                 type="button"
                 className="result-btn profile-delete-btn"
@@ -286,7 +381,14 @@ export default function Profile() {
               >
                 {saving ? "saving..." : "save changes"}
               </button>
-              <button type="button" className="result-btn" onClick={handleCancel} data-testid="profile-cancel-button">cancel</button>
+              <button
+                type="button"
+                className="result-btn"
+                onClick={handleCancel}
+                data-testid="profile-cancel-button"
+              >
+                cancel
+              </button>
             </div>
           )}
         </div>
@@ -294,17 +396,27 @@ export default function Profile() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2 className="modal-title">delete account?</h2>
             <p className="modal-text">
-              this action cannot be undone. all your data will be permanently deleted.
+              this action cannot be undone. all your data will be permanently
+              deleted.
             </p>
             <div className="modal-actions">
-              <button className="auth-btn profile-delete-confirm" onClick={handleDelete}>
+              <button
+                className="auth-btn profile-delete-confirm"
+                onClick={handleDelete}
+              >
                 yes, delete my account
               </button>
-              <button className="result-btn" onClick={() => setShowDeleteConfirm(false)}>
+              <button
+                className="result-btn"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
                 cancel
               </button>
             </div>

@@ -7,27 +7,47 @@ export default function History() {
   const userId = getUserId();
 
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [pageNumber, setPageNumber] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedGame, setSelectedGame] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [loadedHistoryKey, setLoadedHistoryKey] = useState(null);
   const pageSize = 15;
+  const requestKey = `${userId || "guest"}-${pageNumber}`;
+  const loading = Boolean(userId) && loadedHistoryKey !== requestKey;
 
   useEffect(() => {
     if (!userId) {
       navigate("/");
       return;
     }
-    setLoading(true);
+
+    let isCancelled = false;
+
     getUserStats(userId, pageNumber, pageSize)
       .then((res) => {
+        if (isCancelled) {
+          return;
+        }
+
         setData(res.items || []);
         setTotalCount(res.totalCount || 0);
+        setLoadedHistoryKey(requestKey);
       })
-      .catch(() => setData([]))
-      .finally(() => setLoading(false));
-  }, [userId, pageNumber, navigate]);
+      .catch(() => {
+        if (isCancelled) {
+          return;
+        }
+
+        setData([]);
+        setTotalCount(0);
+        setLoadedHistoryKey(requestKey);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [userId, pageNumber, navigate, requestKey]);
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -60,72 +80,121 @@ export default function History() {
 
       {/* Game Detail Modal */}
       {selectedGame && (
-        <div className="modal-overlay" onClick={() => setSelectedGame(null)} data-testid="history-detail-modal-overlay">
+        <div
+          className="modal-overlay"
+          onClick={() => setSelectedGame(null)}
+          data-testid="history-detail-modal-overlay"
+        >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal-title" data-testid="history-detail-title">game details</h2>
+            <h2 className="modal-title" data-testid="history-detail-title">
+              game details
+            </h2>
             <div className="detail-grid" data-testid="history-detail-modal">
               <div className="detail-item">
                 <span className="detail-label">wpm</span>
-                <span className="detail-value highlight" data-testid="history-detail-wpm">{Math.round(selectedGame.wordsPerMinute)}</span>
+                <span
+                  className="detail-value highlight"
+                  data-testid="history-detail-wpm"
+                >
+                  {Math.round(selectedGame.wordsPerMinute)}
+                </span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">raw wpm</span>
-                <span className="detail-value">{Math.round(selectedGame.rawWordsPerMinute)}</span>
+                <span className="detail-value">
+                  {Math.round(selectedGame.rawWordsPerMinute)}
+                </span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">accuracy</span>
-                <span className="detail-value highlight">{Math.round(selectedGame.accuracy)}%</span>
+                <span className="detail-value highlight">
+                  {Math.round(selectedGame.accuracy)}%
+                </span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">consistency</span>
-                <span className="detail-value">{Math.round(selectedGame.consistency)}%</span>
+                <span className="detail-value">
+                  {Math.round(selectedGame.consistency)}%
+                </span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">correct</span>
-                <span className="detail-value" style={{ color: "var(--correct-color)" }}>
+                <span
+                  className="detail-value"
+                  style={{ color: "var(--correct-color)" }}
+                >
                   {selectedGame.correctCharacters}
                 </span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">incorrect</span>
-                <span className="detail-value" style={{ color: "var(--error-color)" }}>
+                <span
+                  className="detail-value"
+                  style={{ color: "var(--error-color)" }}
+                >
                   {selectedGame.incorrectCharacters}
                 </span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">extra</span>
-                <span className="detail-value" style={{ color: "var(--error-extra-color)" }}>
+                <span
+                  className="detail-value"
+                  style={{ color: "var(--error-extra-color)" }}
+                >
                   {selectedGame.extraCharacters}
                 </span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">missed</span>
-                <span className="detail-value" style={{ color: "var(--sub-color)" }}>
+                <span
+                  className="detail-value"
+                  style={{ color: "var(--sub-color)" }}
+                >
                   {selectedGame.missedCharacters}
                 </span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">duration</span>
-                <span className="detail-value" data-testid="history-detail-duration">{selectedGame.durationInSeconds}s</span>
+                <span
+                  className="detail-value"
+                  data-testid="history-detail-duration"
+                >
+                  {selectedGame.durationInSeconds}s
+                </span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">mode</span>
-                <span className="detail-value" data-testid="history-detail-mode">{selectedGame.mode}</span>
+                <span
+                  className="detail-value"
+                  data-testid="history-detail-mode"
+                >
+                  {selectedGame.mode}
+                </span>
               </div>
               <div className="detail-item full-width">
                 <span className="detail-label">date</span>
-                <span className="detail-value">{formatDate(selectedGame.createdAt)}</span>
+                <span className="detail-value">
+                  {formatDate(selectedGame.createdAt)}
+                </span>
               </div>
             </div>
             <div className="modal-actions">
-              <button className="result-btn" onClick={() => setSelectedGame(null)} data-testid="history-detail-close">close</button>
+              <button
+                className="result-btn"
+                onClick={() => setSelectedGame(null)}
+                data-testid="history-detail-close"
+              >
+                close
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className="leaderboard-empty" data-testid="history-loading">loading...</div>
+        <div className="leaderboard-empty" data-testid="history-loading">
+          loading...
+        </div>
       ) : data.length === 0 ? (
         <div className="leaderboard-empty" data-testid="history-empty">
           no games yet —{" "}
@@ -154,12 +223,30 @@ export default function History() {
             <tbody>
               {data.map((item, index) => (
                 <tr key={item.id || index} data-testid={`history-row-${index}`}>
-                  <td className="rank-cell" data-testid={`history-rank-${index}`}>{(pageNumber - 1) * pageSize + index + 1}</td>
-                  <td className="wpm-cell" data-testid={`history-wpm-${index}`}>{Math.round(item.wordsPerMinute)}</td>
-                  <td style={{ color: "var(--text-color)" }}>{Math.round(item.rawWordsPerMinute)}</td>
-                  <td className="accuracy-cell">{Math.round(item.accuracy)}%</td>
-                  <td className="accuracy-cell">{Math.round(item.consistency)}%</td>
-                  <td style={{ color: "var(--sub-color)" }} data-testid={`history-duration-${index}`}>{item.durationInSeconds}s</td>
+                  <td
+                    className="rank-cell"
+                    data-testid={`history-rank-${index}`}
+                  >
+                    {(pageNumber - 1) * pageSize + index + 1}
+                  </td>
+                  <td className="wpm-cell" data-testid={`history-wpm-${index}`}>
+                    {Math.round(item.wordsPerMinute)}
+                  </td>
+                  <td style={{ color: "var(--text-color)" }}>
+                    {Math.round(item.rawWordsPerMinute)}
+                  </td>
+                  <td className="accuracy-cell">
+                    {Math.round(item.accuracy)}%
+                  </td>
+                  <td className="accuracy-cell">
+                    {Math.round(item.consistency)}%
+                  </td>
+                  <td
+                    style={{ color: "var(--sub-color)" }}
+                    data-testid={`history-duration-${index}`}
+                  >
+                    {item.durationInSeconds}s
+                  </td>
                   <td style={{ color: "var(--sub-color)", fontSize: "0.8rem" }}>
                     {formatDate(item.createdAt)}
                   </td>
