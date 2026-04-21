@@ -1,6 +1,13 @@
 # Render Infrastructure-as-Code
 # Docs: https://render.com/docs/yaml-spec
 
+databases:
+    - name: keyless-postgres
+      plan: free
+      databaseName: keyless
+      user: keyless
+      postgresMajorVersion: "17"
+
 services:
     - type: web
       name: keyless-frontend
@@ -38,7 +45,9 @@ services:
 
       envVars:
           - key: ConnectionStrings__DefaultConnection
-            value: Data Source=/tmp/Keyless.db
+            fromDatabase:
+                name: keyless-postgres
+                property: connectionString
           - key: Jwt__Key
             generateValue: true
           - key: Jwt__Issuer

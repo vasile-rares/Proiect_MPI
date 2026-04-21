@@ -67,6 +67,20 @@ jobs:
     e2e:
         name: E2E Tests
         runs-on: ubuntu-latest
+        services:
+            postgres:
+                image: postgres:17-alpine
+                env:
+                    POSTGRES_DB: keyless_e2e
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd "pg_isready -U postgres -d keyless_e2e"
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
         steps:
             - uses: actions/checkout@v4
 
@@ -98,6 +112,7 @@ jobs:
               env:
                   CI: "true"
                   DOTNET_NO_BUILD: "1"
+                  E2E_POSTGRES_CONNECTION_STRING: Host=127.0.0.1;Port=5432;Database=keyless_e2e;Username=postgres;Password=postgres
 
             - name: Upload Playwright report on failure
               if: failure()

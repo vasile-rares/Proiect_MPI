@@ -13,7 +13,7 @@ public class KeylessDatabaseContextFactory : IDesignTimeDbContextFactory<Keyless
         var connectionString = ReadConnectionString(apiProjectPath);
 
         var optionsBuilder = new DbContextOptionsBuilder<KeylessDatabaseContext>();
-        optionsBuilder.UseSqlite(SqliteConnectionStringResolver.Resolve(connectionString, apiProjectPath));
+        optionsBuilder.UseNpgsql(PostgresConnectionStringResolver.Resolve(connectionString));
 
         return new KeylessDatabaseContext(optionsBuilder.Options);
     }
@@ -24,7 +24,8 @@ public class KeylessDatabaseContextFactory : IDesignTimeDbContextFactory<Keyless
 
         while (currentDirectory is not null)
         {
-            if (File.Exists(Path.Combine(currentDirectory.FullName, "Proiect_MPI.sln")))
+            if (File.Exists(Path.Combine(currentDirectory.FullName, "Keyless.sln"))
+                || File.Exists(Path.Combine(currentDirectory.FullName, "Proiect_MPI.sln")))
             {
                 return currentDirectory.FullName;
             }
@@ -37,6 +38,12 @@ public class KeylessDatabaseContextFactory : IDesignTimeDbContextFactory<Keyless
 
     private static string ReadConnectionString(string apiProjectPath)
     {
+        var environmentConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+        if (!string.IsNullOrWhiteSpace(environmentConnectionString))
+        {
+            return environmentConnectionString;
+        }
+
         var appSettingsPath = Path.Combine(apiProjectPath, "appsettings.json");
         using var document = JsonDocument.Parse(File.ReadAllText(appSettingsPath));
 

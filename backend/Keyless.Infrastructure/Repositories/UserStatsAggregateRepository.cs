@@ -23,50 +23,6 @@ namespace Keyless.Infrastructure.Repositories
 
         public async Task UpsertAsync(UserStatsAggregate aggregate)
         {
-            if (_context.Database.IsSqlite())
-            {
-                await _context.Database.ExecuteSqlInterpolatedAsync($@"
-                    INSERT INTO ""UserStatsAggregates"" (
-                        ""UserId"",
-                        ""GamesCount"",
-                        ""HighestWordsPerMinute"",
-                        ""AverageWordsPerMinute"",
-                        ""HighestRawWordsPerMinute"",
-                        ""AverageRawWordsPerMinute"",
-                        ""HighestAccuracy"",
-                        ""AverageAccuracy"",
-                        ""HighestConsistency"",
-                        ""AverageConsistency"",
-                        ""UpdatedAt""
-                    )
-                    VALUES (
-                        {aggregate.UserId},
-                        {aggregate.GamesCount},
-                        {aggregate.HighestWordsPerMinute},
-                        {aggregate.AverageWordsPerMinute},
-                        {aggregate.HighestRawWordsPerMinute},
-                        {aggregate.AverageRawWordsPerMinute},
-                        {aggregate.HighestAccuracy},
-                        {aggregate.AverageAccuracy},
-                        {aggregate.HighestConsistency},
-                        {aggregate.AverageConsistency},
-                        {aggregate.UpdatedAt}
-                    )
-                    ON CONFLICT(""UserId"") DO UPDATE SET
-                        ""GamesCount"" = excluded.""GamesCount"",
-                        ""HighestWordsPerMinute"" = excluded.""HighestWordsPerMinute"",
-                        ""AverageWordsPerMinute"" = excluded.""AverageWordsPerMinute"",
-                        ""HighestRawWordsPerMinute"" = excluded.""HighestRawWordsPerMinute"",
-                        ""AverageRawWordsPerMinute"" = excluded.""AverageRawWordsPerMinute"",
-                        ""HighestAccuracy"" = excluded.""HighestAccuracy"",
-                        ""AverageAccuracy"" = excluded.""AverageAccuracy"",
-                        ""HighestConsistency"" = excluded.""HighestConsistency"",
-                        ""AverageConsistency"" = excluded.""AverageConsistency"",
-                        ""UpdatedAt"" = excluded.""UpdatedAt"";");
-
-                return;
-            }
-
             var existing = await _context.UserStatsAggregates.FirstOrDefaultAsync(x => x.UserId == aggregate.UserId);
             if (existing == null)
             {
