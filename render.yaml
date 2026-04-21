@@ -29,8 +29,8 @@ services:
       runtime: docker
       plan: free
       rootDir: backend
-      dockerfilePath: backend/Dockerfile
-      dockerContext: backend
+      dockerfilePath: Dockerfile
+      dockerContext: .
       healthCheckPath: /health
       autoDeployTrigger: off
 
