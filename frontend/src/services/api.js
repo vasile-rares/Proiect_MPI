@@ -1,4 +1,5 @@
-const API_URL = "/api";
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const API_URL = configuredApiUrl ? configuredApiUrl.replace(/\/$/, "") : "/api";
 export const PROFILE_UPDATED_EVENT = "keyless:profile-updated";
 
 function parseJwt(token) {
@@ -9,7 +10,7 @@ function parseJwt(token) {
       atob(base64)
         .split("")
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
+        .join(""),
     );
     return JSON.parse(jsonPayload);
   } catch {
@@ -53,7 +54,6 @@ function authHeaders() {
   if (token) headers["Authorization"] = `Bearer ${token}`;
   return headers;
 }
-
 
 export const login = async (data) => {
   const res = await fetch(`${API_URL}/Authentication/login`, {
@@ -104,9 +104,15 @@ export const register = async (data) => {
   return JSON.parse(body);
 };
 
-export const getLeaderboard = async (scope = "all-time", durationInSeconds, mode, topN = 10) => {
+export const getLeaderboard = async (
+  scope = "all-time",
+  durationInSeconds,
+  mode,
+  topN = 10,
+) => {
   const params = new URLSearchParams({ scope, topN: topN.toString() });
-  if (durationInSeconds) params.set("durationInSeconds", durationInSeconds.toString());
+  if (durationInSeconds)
+    params.set("durationInSeconds", durationInSeconds.toString());
   if (mode) params.set("mode", mode);
 
   const res = await fetch(`${API_URL}/StatisticsGame/leaderboard?${params}`);
@@ -132,7 +138,6 @@ export const saveScore = async (data) => {
   }
 };
 
-
 export const getUserProfile = async (id) => {
   const res = await fetch(`${API_URL}/User/${id}`, {
     headers: authHeaders(),
@@ -152,7 +157,10 @@ export const updateUserProfile = async (id, data) => {
     let message = "Failed to update profile";
     try {
       const json = JSON.parse(body);
-      message = json.message || json.title || (json.errors ? JSON.stringify(json.errors) : message);
+      message =
+        json.message ||
+        json.title ||
+        (json.errors ? JSON.stringify(json.errors) : message);
     } catch {
       if (body) message = body;
     }
@@ -169,7 +177,6 @@ export const deleteUserAccount = async (id) => {
   if (!res.ok) throw new Error("Failed to delete account");
   return true;
 };
-
 
 export const getUserStats = async (id, pageNumber = 1, pageSize = 20) => {
   const params = new URLSearchParams({
