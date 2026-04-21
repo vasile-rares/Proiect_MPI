@@ -55,6 +55,10 @@ builder.Services.AddScoped<IUserStatsAggregateRepository, UserStatsAggregateRepo
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var jwtKey = jwtSettings["Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+if (jwtKey.StartsWith("PLACEHOLDER", StringComparison.OrdinalIgnoreCase) || jwtKey.Length < 32)
+{
+    throw new InvalidOperationException("Jwt:Key must be a strong secret of at least 32 characters.");
+}
 
 builder.Services.AddAuthentication(options =>
 {
@@ -117,6 +121,7 @@ app.Use(async (context, next) =>
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapControllers();
 
 app.Run();

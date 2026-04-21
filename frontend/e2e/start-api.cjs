@@ -23,7 +23,14 @@ for (const filePath of [
   }
 }
 
-const apiProcess = spawn("dotnet", ["run", "--no-launch-profile"], {
+// In CI the backend is pre-built; set DOTNET_NO_BUILD=1 to skip rebuild and
+// avoid hitting the Playwright webServer timeout on the first cold run.
+const dotnetRunArgs = ["run", "--no-launch-profile"];
+if (process.env.DOTNET_NO_BUILD === "1") {
+  dotnetRunArgs.push("--no-build");
+}
+
+const apiProcess = spawn("dotnet", dotnetRunArgs, {
   cwd: apiDirectory,
   env: {
     ...process.env,

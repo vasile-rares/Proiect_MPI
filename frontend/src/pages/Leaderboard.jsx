@@ -6,21 +6,39 @@ const SCOPE_OPTIONS = ["all-time", "weekly", "daily"];
 
 export default function Leaderboard() {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [duration, setDuration] = useState(30);
   const [scope, setScope] = useState("all-time");
+  const [loadedRequestKey, setLoadedRequestKey] = useState(null);
   const myUserId = getUserId();
   const myUsername = getUsername();
+  const requestKey = `${scope}-${duration}`;
+  const loading = loadedRequestKey !== requestKey;
 
   useEffect(() => {
-    setLoading(true);
+    let isCancelled = false;
+
     getLeaderboard(scope, duration, "time", 20)
       .then((res) => {
+        if (isCancelled) {
+          return;
+        }
+
         setData(Array.isArray(res) ? res : []);
+        setLoadedRequestKey(requestKey);
       })
-      .catch(() => setData([]))
-      .finally(() => setLoading(false));
-  }, [scope, duration]);
+      .catch(() => {
+        if (isCancelled) {
+          return;
+        }
+
+        setData([]);
+        setLoadedRequestKey(requestKey);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [scope, duration, requestKey]);
 
   const getRankClass = (index) => {
     if (index === 0) return "gold";
@@ -63,9 +81,13 @@ export default function Leaderboard() {
       </div>
 
       {loading ? (
-        <div className="leaderboard-empty" data-testid="leaderboard-loading">loading...</div>
+        <div className="leaderboard-empty" data-testid="leaderboard-loading">
+          loading...
+        </div>
       ) : data.length === 0 ? (
-        <div className="leaderboard-empty" data-testid="leaderboard-empty">no scores yet — be the first!</div>
+        <div className="leaderboard-empty" data-testid="leaderboard-empty">
+          no scores yet — be the first!
+        </div>
       ) : (
         <table className="leaderboard-table" data-testid="leaderboard-table">
           <thead>
@@ -84,24 +106,68 @@ export default function Leaderboard() {
               <tr
                 key={index}
                 className={item.userId === myUserId ? "my-row" : ""}
-                data-testid={item.userId === myUserId ? "leaderboard-my-row" : `leaderboard-row-${index}`}
+                data-testid={
+                  item.userId === myUserId
+                    ? "leaderboard-my-row"
+                    : `leaderboard-row-${index}`
+                }
               >
-                <td className={`rank-cell ${getRankClass(index)}`} data-testid={item.userId === myUserId ? "leaderboard-my-rank" : `leaderboard-rank-${index}`}>
+                <td
+                  className={`rank-cell ${getRankClass(index)}`}
+                  data-testid={
+                    item.userId === myUserId
+                      ? "leaderboard-my-rank"
+                      : `leaderboard-rank-${index}`
+                  }
+                >
                   {index + 1}
                 </td>
-                <td className="username-cell" data-testid={item.userId === myUserId ? "leaderboard-my-username" : `leaderboard-username-${index}`}>
-                  {item.userId === myUserId ? myUsername || "you" : `player ${index + 1}`}
+                <td
+                  className="username-cell"
+                  data-testid={
+                    item.userId === myUserId
+                      ? "leaderboard-my-username"
+                      : `leaderboard-username-${index}`
+                  }
+                >
+                  {item.userId === myUserId
+                    ? myUsername || "you"
+                    : `player ${index + 1}`}
                 </td>
-                <td className="wpm-cell" data-testid={item.userId === myUserId ? "leaderboard-my-wpm" : `leaderboard-wpm-${index}`}>
-                  {item.wordsPerMinute != null ? Math.round(item.wordsPerMinute) : "—"}
+                <td
+                  className="wpm-cell"
+                  data-testid={
+                    item.userId === myUserId
+                      ? "leaderboard-my-wpm"
+                      : `leaderboard-wpm-${index}`
+                  }
+                >
+                  {item.wordsPerMinute != null
+                    ? Math.round(item.wordsPerMinute)
+                    : "—"}
                 </td>
                 <td className="accuracy-cell">
-                  {item.accuracy != null ? `${Math.round(item.accuracy)}%` : "—"}
+                  {item.accuracy != null
+                    ? `${Math.round(item.accuracy)}%`
+                    : "—"}
                 </td>
-                <td style={{ color: "var(--sub-color)" }} data-testid={item.userId === myUserId ? "leaderboard-my-duration" : `leaderboard-duration-value-${index}`}>{item.durationInSeconds}s</td>
-                <td style={{ color: "var(--sub-color)" }}>{item.mode || "—"}</td>
+                <td
+                  style={{ color: "var(--sub-color)" }}
+                  data-testid={
+                    item.userId === myUserId
+                      ? "leaderboard-my-duration"
+                      : `leaderboard-duration-value-${index}`
+                  }
+                >
+                  {item.durationInSeconds}s
+                </td>
+                <td style={{ color: "var(--sub-color)" }}>
+                  {item.mode || "—"}
+                </td>
                 <td style={{ color: "var(--sub-color)", fontSize: "0.8rem" }}>
-                  {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"}
+                  {item.createdAt
+                    ? new Date(item.createdAt).toLocaleDateString()
+                    : "—"}
                 </td>
               </tr>
             ))}
