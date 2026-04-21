@@ -23,10 +23,14 @@ RUN dotnet publish Keyless.API/Keyless.API.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 
+RUN apt-get update \
+        && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+        && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/publish .
 
-# Bind to port 8080 (non-root-friendly default for containers)
-ENV ASPNETCORE_URLS=http://+:8080
+# Bind to port 8080 without overriding the HTTP_PORTS defaults provided by the host.
+ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "Keyless.API.dll"]
