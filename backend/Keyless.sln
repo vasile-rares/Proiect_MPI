@@ -1,0 +1,54 @@
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keyless.API", "Keyless.API\Keyless.API.csproj", "{338BA7CE-A069-37A8-DFFC-308D80DF3D8A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keyless.Application", "Keyless.Application\Keyless.Application.csproj", "{0E1106FE-C2A3-FD7F-E916-E072EEC5D92F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keyless.Domain", "Keyless.Domain\Keyless.Domain.csproj", "{03ADDC59-D293-8BB4-9349-41A6F6E29E34}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keyless.Infrastructure", "Keyless.Infrastructure\Keyless.Infrastructure.csproj", "{F57547B3-FD79-ABA2-ADA5-B94199256CD4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keyless.Shared", "Keyless.Shared\Keyless.Shared.csproj", "{3F57F8B4-2667-4157-EA70-48AD660BF3D0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keyless.Tests", "Keyless.Tests\Keyless.Tests.csproj", "{02CE4D29-4493-760E-E9E8-043840B77B95}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{338BA7CE-A069-37A8-DFFC-308D80DF3D8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{338BA7CE-A069-37A8-DFFC-308D80DF3D8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{338BA7CE-A069-37A8-DFFC-308D80DF3D8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{338BA7CE-A069-37A8-DFFC-308D80DF3D8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E1106FE-C2A3-FD7F-E916-E072EEC5D92F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E1106FE-C2A3-FD7F-E916-E072EEC5D92F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E1106FE-C2A3-FD7F-E916-E072EEC5D92F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E1106FE-C2A3-FD7F-E916-E072EEC5D92F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03ADDC59-D293-8BB4-9349-41A6F6E29E34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03ADDC59-D293-8BB4-9349-41A6F6E29E34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03ADDC59-D293-8BB4-9349-41A6F6E29E34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03ADDC59-D293-8BB4-9349-41A6F6E29E34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F57547B3-FD79-ABA2-ADA5-B94199256CD4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F57547B3-FD79-ABA2-ADA5-B94199256CD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F57547B3-FD79-ABA2-ADA5-B94199256CD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F57547B3-FD79-ABA2-ADA5-B94199256CD4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F57F8B4-2667-4157-EA70-48AD660BF3D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F57F8B4-2667-4157-EA70-48AD660BF3D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F57F8B4-2667-4157-EA70-48AD660BF3D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F57F8B4-2667-4157-EA70-48AD660BF3D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02CE4D29-4493-760E-E9E8-043840B77B95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02CE4D29-4493-760E-E9E8-043840B77B95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02CE4D29-4493-760E-E9E8-043840B77B95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02CE4D29-4493-760E-E9E8-043840B77B95}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C60B0CE7-C15C-41E1-B2D2-3162B81670EA}
+	EndGlobalSection
+EndGlobal

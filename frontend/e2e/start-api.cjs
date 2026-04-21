@@ -1,12 +1,21 @@
-const fs = require("fs");
+﻿const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
 
 const workspaceRoot = path.resolve(__dirname, "..", "..");
-const apiDirectory = path.join(workspaceRoot, "backend", "MonkeyType.API");
-const databasePath = path.join(workspaceRoot, "backend", "MonkeyType.Infrastructure", "MonkeyType.E2E.db");
+const apiDirectory = path.join(workspaceRoot, "backend", "Keyless.API");
+const databasePath = path.join(
+  workspaceRoot,
+  "backend",
+  "Keyless.Infrastructure",
+  "Keyless.E2E.db",
+);
 
-for (const filePath of [databasePath, `${databasePath}-shm`, `${databasePath}-wal`]) {
+for (const filePath of [
+  databasePath,
+  `${databasePath}-shm`,
+  `${databasePath}-wal`,
+]) {
   try {
     fs.rmSync(filePath, { force: true });
   } catch {
@@ -20,7 +29,8 @@ const apiProcess = spawn("dotnet", ["run", "--no-launch-profile"], {
     ...process.env,
     ASPNETCORE_ENVIRONMENT: "Development",
     ASPNETCORE_URLS: process.env.ASPNETCORE_URLS || "http://localhost:5232",
-    ConnectionStrings__DefaultConnection: "Data Source=../MonkeyType.Infrastructure/MonkeyType.E2E.db",
+    ConnectionStrings__DefaultConnection:
+      "Data Source=../Keyless.Infrastructure/Keyless.E2E.db",
   },
   stdio: "inherit",
   shell: true,
