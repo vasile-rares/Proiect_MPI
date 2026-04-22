@@ -127,6 +127,55 @@ app.UseExceptionHandler(exceptionApplication =>
     });
 });
 
+app.Use(async (context, next) =>
+{
+    var requestLogger = context.RequestServices
+        .GetRequiredService<ILoggerFactory>()
+        .CreateLogger("Keyless.API.Request");
+
+    var correlationId = context.Request.Headers[correlationHeaderName].FirstOrDefault();
+    if (string.IsNullOrWhiteSpace(correlationId))
+    {
+        correlationId = Guid.NewGuid().ToString("n");
+    }
+
+    context.TraceIdentifier = correlationId;
+    context.Response.Headers[correlationHeaderName] = correlationId;
+
+    var stopwatch = Stopwatch.StartNew();
+
+    using (requestLogger.BeginScope(new Dictionary<string, object?>
+    {
+        ["Service"] = serviceName,
+        ["CorrelationId"] = correlationId,
+        ["RequestPath"] = context.Request.Path.Value
+    }))
+    {
+        try
+        {
+            await next();
+        }
+        finally
+        {
+            stopwatch.Stop();
+
+            var userId = context.User.FindFirst("sub")?.Value ?? "anonymous";
+            var logLevel = context.Request.Path.StartsWithSegments("/health")
+                ? LogLevel.Debug
+                : LogLevel.Information;
+
+            requestLogger.Log(
+                logLevel,
+                "HTTP {Method} {Path} responded {StatusCode} in {ElapsedMs} ms for {UserId}.",
+                context.Request.Method,
+                context.Request.Path,
+                context.Response.StatusCode,
+                Math.Round(stopwatch.Elapsed.TotalMilliseconds, 2),
+                userId);
+        }
+    }
+});
+
 using (var scope = app.Services.CreateScope())
 {
     var databaseContext = scope.ServiceProvider.GetRequiredService<KeylessDatabaseContext>();
@@ -163,56 +212,6 @@ if (hasHttpsEndpointConfigured)
 }
 
 app.UseCors("Default");
-
-app.Use(async (context, next) =>
-{
-    var requestLogger = context.RequestServices
-        .GetRequiredService<ILoggerFactory>()
-        .CreateLogger("Keyless.API.Request");
-
-    var correlationId = context.Request.Headers[correlationHeaderName].FirstOrDefault();
-    if (string.IsNullOrWhiteSpace(correlationId))
-    {
-        correlationId = Guid.NewGuid().ToString("n");
-    }
-
-    context.TraceIdentifier = correlationId;
-    context.Response.Headers[correlationHeaderName] = correlationId;
-
-    var stopwatch = Stopwatch.StartNew();
-
-    using (requestLogger.BeginScope(new Dictionary<string, object?>
-    {
-        ["Service"] = serviceName,
-        ["CorrelationId"] = correlationId,
-        ["TraceId"] = Activity.Current?.TraceId.ToString(),
-        ["RequestPath"] = context.Request.Path.Value
-    }))
-    {
-        try
-        {
-            await next();
-        }
-        finally
-        {
-            stopwatch.Stop();
-
-            var userId = context.User.FindFirst("sub")?.Value ?? "anonymous";
-            var logLevel = context.Request.Path.StartsWithSegments("/health")
-                ? LogLevel.Debug
-                : LogLevel.Information;
-
-            requestLogger.Log(
-                logLevel,
-                "HTTP {Method} {Path} responded {StatusCode} in {ElapsedMs} ms for {UserId}.",
-                context.Request.Method,
-                context.Request.Path,
-                context.Response.StatusCode,
-                Math.Round(stopwatch.Elapsed.TotalMilliseconds, 2),
-                userId);
-        }
-    }
-});
 
 app.Use(async (context, next) =>
 {
