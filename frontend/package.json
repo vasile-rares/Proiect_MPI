@@ -28,6 +28,7 @@
         "e2e": "playwright test",
         "e2e:headed": "playwright test --headed",
         "e2e:install": "playwright install chromium",
-        "e2e:report": "playwright show-report"
+        "e2e:report": "playwright show-report",
+        "load:leaderboard": "node ./load-tests/leaderboard-load-test.js"
     }
 }

@@ -32,6 +32,24 @@ To inspect a failed run:
 
 `npm run e2e:report`
 
+### `npm run load:leaderboard`
+
+Runs the leaderboard load-test harness against the backend API.
+By default the script validates the leaderboard at 50 concurrent users, then keeps increasing concurrency until the scenario starts returning 5xx responses.
+
+The API must already be running before you start the load test.
+
+Example:
+
+`npm run load:leaderboard`
+
+Custom example:
+
+`npm run load:leaderboard -- --api-base-url=https://staging.example.com --target-concurrency=50 --max-concurrency=120 --step=10`
+
+The runner generates both Markdown and JSON reports under `load-tests/reports/`, including a `leaderboard-load-report-latest.md` file ready to share with DevOps.
+See `load-tests/README.md` for the full workflow and the supported CLI options.
+
 ### `npm run build`
 
 Builds the app for production to the `build` folder.\

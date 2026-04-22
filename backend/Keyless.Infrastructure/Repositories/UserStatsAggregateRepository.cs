@@ -17,7 +17,6 @@ namespace Keyless.Infrastructure.Repositories
         public async Task<UserStatsAggregate?> GetByUserIdAsync(Guid userId)
         {
             return await _context.UserStatsAggregates
-                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.UserId == userId);
         }
 
