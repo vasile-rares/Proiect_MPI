@@ -39,28 +39,79 @@ public static class PostgresConnectionStringResolver
       var key = Uri.UnescapeDataString(keyValue[0]);
       var value = Uri.UnescapeDataString(keyValue[1]);
 
-      switch (key.ToLowerInvariant())
+      switch (NormalizeKey(key))
       {
         case "sslmode":
-          builder.SslMode = Enum.Parse<SslMode>(value, ignoreCase: true);
+          if (Enum.TryParse<SslMode>(value, ignoreCase: true, out var sslMode))
+          {
+            builder.SslMode = sslMode;
+          }
           break;
         case "trust_server_certificate":
-        case "trust server certificate":
+        case "trustservercertificate":
+          if (TryParseBoolean(value, out var trustServerCertificate))
+          {
+            builder["Trust Server Certificate"] = trustServerCertificate;
+          }
           break;
         case "pooling":
-          builder.Pooling = bool.Parse(value);
+          if (TryParseBoolean(value, out var pooling))
+          {
+            builder.Pooling = pooling;
+          }
           break;
         case "minimum pool size":
+        case "minimumpoolsize":
         case "minpoolsize":
-          builder.MinPoolSize = int.Parse(value);
+          if (int.TryParse(value, out var minPoolSize))
+          {
+            builder.MinPoolSize = minPoolSize;
+          }
           break;
         case "maximum pool size":
+        case "maximumpoolsize":
         case "maxpoolsize":
-          builder.MaxPoolSize = int.Parse(value);
+          if (int.TryParse(value, out var maxPoolSize))
+          {
+            builder.MaxPoolSize = maxPoolSize;
+          }
           break;
       }
     }
 
     return builder.ConnectionString;
+  }
+
+  private static string NormalizeKey(string key)
+  {
+    return key
+      .Replace("_", string.Empty, StringComparison.Ordinal)
+      .Replace(" ", string.Empty, StringComparison.Ordinal)
+      .ToLowerInvariant();
+  }
+
+  private static bool TryParseBoolean(string value, out bool result)
+  {
+    if (bool.TryParse(value, out result))
+    {
+      return true;
+    }
+
+    switch (value.Trim())
+    {
+      case "1":
+      case "yes":
+      case "on":
+        result = true;
+        return true;
+      case "0":
+      case "no":
+      case "off":
+        result = false;
+        return true;
+      default:
+        result = default;
+        return false;
+    }
   }
 }
