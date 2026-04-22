@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Keyless.Domain.Entities;
 using Keyless.Infrastructure.Context;
@@ -8,21 +7,18 @@ using Xunit;
 
 namespace Keyless.Tests.UnitTests;
 
-public sealed class UserStatsAggregateRepositoryTests : IDisposable
+public sealed class UserStatsAggregateRepositoryTests
 {
-    private readonly SqliteConnection _connection;
     private readonly DbContextOptions<KeylessDatabaseContext> _options;
 
     public UserStatsAggregateRepositoryTests()
     {
-        _connection = new SqliteConnection("Data Source=:memory:");
-        _connection.Open();
-
         _options = new DbContextOptionsBuilder<KeylessDatabaseContext>()
-            .UseSqlite(_connection)
+            .UseInMemoryDatabase($"user-stats-aggregate-tests-{Guid.NewGuid()}")
             .Options;
 
         using var context = CreateContext();
+        context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
     }
 
@@ -70,11 +66,6 @@ public sealed class UserStatsAggregateRepositoryTests : IDisposable
         aggregates[0].AverageAccuracy.Should().Be(97m);
         aggregates[0].HighestConsistency.Should().Be(98m);
         aggregates[0].AverageConsistency.Should().Be(98m);
-    }
-
-    public void Dispose()
-    {
-        _connection.Dispose();
     }
 
     private KeylessDatabaseContext CreateContext()

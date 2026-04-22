@@ -38,12 +38,10 @@ builder.Services.AddCors(options =>
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
-
-var apiProjectPath = SqliteConnectionStringResolver.ResolveApiProjectPath(builder.Environment.ContentRootPath);
-var resolvedConnectionString = SqliteConnectionStringResolver.Resolve(connectionString, apiProjectPath);
+var resolvedConnectionString = PostgresConnectionStringResolver.Resolve(connectionString);
 
 builder.Services.AddDbContext<KeylessDatabaseContext>(options =>
-    options.UseSqlite(resolvedConnectionString));
+    options.UseNpgsql(resolvedConnectionString));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IStatisticsGameRepository, StatisticsGameRepository>();

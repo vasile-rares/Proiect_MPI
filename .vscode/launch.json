@@ -2,6 +2,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch Database (Docker)",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "docker compose up -d postgres",
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "name": "Launch Backend",
             "type": "coreclr",
             "request": "launch",

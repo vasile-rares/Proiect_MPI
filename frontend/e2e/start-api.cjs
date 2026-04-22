@@ -1,27 +1,12 @@
-﻿const fs = require("fs");
-const path = require("path");
+﻿const path = require("path");
 const { spawn } = require("child_process");
 
 const workspaceRoot = path.resolve(__dirname, "..", "..");
 const apiDirectory = path.join(workspaceRoot, "backend", "Keyless.API");
-const databasePath = path.join(
-  workspaceRoot,
-  "backend",
-  "Keyless.Infrastructure",
-  "Keyless.E2E.db",
-);
-
-for (const filePath of [
-  databasePath,
-  `${databasePath}-shm`,
-  `${databasePath}-wal`,
-]) {
-  try {
-    fs.rmSync(filePath, { force: true });
-  } catch {
-    // Best-effort cleanup for repeatable local runs.
-  }
-}
+const connectionString =
+  process.env.E2E_POSTGRES_CONNECTION_STRING ||
+  process.env.ConnectionStrings__DefaultConnection ||
+  "Host=127.0.0.1;Port=55432;Database=keyless_e2e;Username=postgres;Password=postgres";
 
 // In CI the backend is pre-built; set DOTNET_NO_BUILD=1 to skip rebuild and
 // avoid hitting the Playwright webServer timeout on the first cold run.
@@ -36,8 +21,7 @@ const apiProcess = spawn("dotnet", dotnetRunArgs, {
     ...process.env,
     ASPNETCORE_ENVIRONMENT: "Development",
     ASPNETCORE_URLS: process.env.ASPNETCORE_URLS || "http://localhost:5232",
-    ConnectionStrings__DefaultConnection:
-      "Data Source=../Keyless.Infrastructure/Keyless.E2E.db",
+    ConnectionStrings__DefaultConnection: connectionString,
   },
   stdio: "inherit",
   shell: true,
