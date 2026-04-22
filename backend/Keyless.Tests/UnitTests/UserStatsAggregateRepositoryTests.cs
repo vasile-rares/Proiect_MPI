@@ -68,6 +68,65 @@ public sealed class UserStatsAggregateRepositoryTests
         aggregates[0].AverageConsistency.Should().Be(98m);
     }
 
+    [Fact]
+    public async Task GetByUserIdAsync_WhenAggregateExists_ReturnsTrackedEntityForReadModifyUpsertFlow()
+    {
+        var userId = Guid.NewGuid();
+
+        await using (var seedContext = CreateContext())
+        {
+            seedContext.Users.Add(new User
+            {
+                Id = userId,
+                Username = "tracked-aggregate-user",
+                Email = "tracked-aggregate@test.com",
+                PasswordHash = "hash",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            seedContext.UserStatsAggregates.Add(CreateAggregate(userId, 1, 50m, 60m, 91m, 93m));
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using (var context = CreateContext())
+        {
+            var repository = new UserStatsAggregateRepository(context);
+            var aggregate = await repository.GetByUserIdAsync(userId);
+
+            aggregate.Should().NotBeNull();
+            var trackedAggregate = aggregate ?? throw new InvalidOperationException("Aggregate should exist.");
+
+            context.Entry(trackedAggregate).State.Should().Be(EntityState.Unchanged);
+
+            trackedAggregate.GamesCount = 2;
+            trackedAggregate.HighestWordsPerMinute = 72m;
+            trackedAggregate.AverageWordsPerMinute = 61m;
+            trackedAggregate.HighestRawWordsPerMinute = 80m;
+            trackedAggregate.AverageRawWordsPerMinute = 70m;
+            trackedAggregate.HighestAccuracy = 97m;
+            trackedAggregate.AverageAccuracy = 94m;
+            trackedAggregate.HighestConsistency = 98m;
+            trackedAggregate.AverageConsistency = 95m;
+            trackedAggregate.UpdatedAt = DateTime.UtcNow;
+
+            await repository.UpsertAsync(trackedAggregate);
+        }
+
+        await using var assertContext = CreateContext();
+        var aggregates = await assertContext.UserStatsAggregates.Where(x => x.UserId == userId).ToListAsync();
+
+        aggregates.Should().HaveCount(1);
+        aggregates[0].GamesCount.Should().Be(2);
+        aggregates[0].HighestWordsPerMinute.Should().Be(72m);
+        aggregates[0].AverageWordsPerMinute.Should().Be(61m);
+        aggregates[0].HighestRawWordsPerMinute.Should().Be(80m);
+        aggregates[0].AverageRawWordsPerMinute.Should().Be(70m);
+        aggregates[0].HighestAccuracy.Should().Be(97m);
+        aggregates[0].AverageAccuracy.Should().Be(94m);
+        aggregates[0].HighestConsistency.Should().Be(98m);
+        aggregates[0].AverageConsistency.Should().Be(95m);
+    }
+
     private KeylessDatabaseContext CreateContext()
     {
         return new KeylessDatabaseContext(_options);
