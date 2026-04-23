@@ -127,6 +127,110 @@ public sealed class UserStatsAggregateRepositoryTests
         aggregates[0].AverageConsistency.Should().Be(95m);
     }
 
+    [Fact]
+    public async Task UpsertAsync_WhenAggregateWasLoadedDetached_DoesNotInsertDuplicateRow()
+    {
+        var userId = Guid.NewGuid();
+
+        await using (var seedContext = CreateContext())
+        {
+            seedContext.Users.Add(new User
+            {
+                Id = userId,
+                Username = "detached-aggregate-user",
+                Email = "detached-aggregate@test.com",
+                PasswordHash = "hash",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            seedContext.UserStatsAggregates.Add(CreateAggregate(userId, 1, 50m, 60m, 91m, 93m));
+            await seedContext.SaveChangesAsync();
+        }
+
+        UserStatsAggregate detachedAggregate;
+        await using (var readContext = CreateContext())
+        {
+            detachedAggregate = await readContext.UserStatsAggregates
+                .AsNoTracking()
+                .FirstAsync(x => x.UserId == userId);
+        }
+
+        detachedAggregate.GamesCount = 2;
+        detachedAggregate.HighestWordsPerMinute = 74m;
+        detachedAggregate.AverageWordsPerMinute = 62m;
+        detachedAggregate.HighestRawWordsPerMinute = 82m;
+        detachedAggregate.AverageRawWordsPerMinute = 71m;
+        detachedAggregate.HighestAccuracy = 98m;
+        detachedAggregate.AverageAccuracy = 95m;
+        detachedAggregate.HighestConsistency = 99m;
+        detachedAggregate.AverageConsistency = 96m;
+        detachedAggregate.UpdatedAt = DateTime.UtcNow;
+
+        await using (var writeContext = CreateContext())
+        {
+            var repository = new UserStatsAggregateRepository(writeContext);
+            await repository.UpsertAsync(detachedAggregate);
+        }
+
+        await using var assertContext = CreateContext();
+        var aggregates = await assertContext.UserStatsAggregates.Where(x => x.UserId == userId).ToListAsync();
+
+        aggregates.Should().HaveCount(1);
+        aggregates[0].GamesCount.Should().Be(2);
+        aggregates[0].HighestWordsPerMinute.Should().Be(74m);
+        aggregates[0].AverageWordsPerMinute.Should().Be(62m);
+        aggregates[0].HighestRawWordsPerMinute.Should().Be(82m);
+        aggregates[0].AverageRawWordsPerMinute.Should().Be(71m);
+        aggregates[0].HighestAccuracy.Should().Be(98m);
+        aggregates[0].AverageAccuracy.Should().Be(95m);
+        aggregates[0].HighestConsistency.Should().Be(99m);
+        aggregates[0].AverageConsistency.Should().Be(96m);
+    }
+
+    [Fact]
+    public async Task UpsertAsync_WhenCalledRepeatedlyForSameEntity_PreservesSingleRowAndLatestValues()
+    {
+        var userId = Guid.NewGuid();
+
+        await using (var seedContext = CreateContext())
+        {
+            seedContext.Users.Add(new User
+            {
+                Id = userId,
+                Username = "repeat-upsert-user",
+                Email = "repeat-upsert@test.com",
+                PasswordHash = "hash",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using (var context = CreateContext())
+        {
+            var repository = new UserStatsAggregateRepository(context);
+
+            await repository.UpsertAsync(CreateAggregate(userId, 1, 50m, 60m, 91m, 93m));
+            await repository.UpsertAsync(CreateAggregate(userId, 2, 72m, 81m, 96m, 97m));
+            await repository.UpsertAsync(CreateAggregate(userId, 3, 75m, 84m, 98m, 99m));
+        }
+
+        await using var assertContext = CreateContext();
+        var aggregates = await assertContext.UserStatsAggregates.Where(x => x.UserId == userId).ToListAsync();
+
+        aggregates.Should().HaveCount(1);
+        aggregates[0].UserId.Should().Be(userId);
+        aggregates[0].GamesCount.Should().Be(3);
+        aggregates[0].HighestWordsPerMinute.Should().Be(75m);
+        aggregates[0].AverageWordsPerMinute.Should().Be(75m);
+        aggregates[0].HighestRawWordsPerMinute.Should().Be(84m);
+        aggregates[0].AverageRawWordsPerMinute.Should().Be(84m);
+        aggregates[0].HighestAccuracy.Should().Be(98m);
+        aggregates[0].AverageAccuracy.Should().Be(98m);
+        aggregates[0].HighestConsistency.Should().Be(99m);
+        aggregates[0].AverageConsistency.Should().Be(99m);
+    }
+
     private KeylessDatabaseContext CreateContext()
     {
         return new KeylessDatabaseContext(_options);

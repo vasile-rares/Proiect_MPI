@@ -50,3 +50,43 @@ test("completed word counts even if the timer expires before space is pressed", 
   await expect(page.getByTestId("results-view")).toBeVisible();
   await expect(page.getByTestId("result-correct-words")).toHaveText("1");
 });
+
+test("incomplete final word is not counted when the timer expires", async ({ page, request, baseURL }) => {
+  const credentials = createCredentials();
+
+  await registerUser(request, credentials);
+  await enableDeterministicGame(page, {
+    words: ["focus"],
+    timerTickMs: 80,
+  });
+  await loginThroughUi(page, baseURL, credentials);
+
+  await page.getByTestId("time-option-15").click();
+  await page.getByTestId("typing-area").click();
+  await page.keyboard.type("fo");
+
+  await expect(page.getByTestId("results-view")).toBeVisible();
+  await expect(page.getByTestId("result-correct-words")).toHaveText("0");
+  await expect(page.getByTestId("result-accuracy")).toHaveText("40%");
+});
+
+test("submitted words and final completed word stay in sync when time expires", async ({ page, request, baseURL }) => {
+  const credentials = createCredentials();
+
+  await registerUser(request, credentials);
+  await enableDeterministicGame(page, {
+    words: ["go", "up"],
+    timerTickMs: 80,
+  });
+  await loginThroughUi(page, baseURL, credentials);
+
+  await page.getByTestId("time-option-15").click();
+  await page.getByTestId("typing-area").click();
+  await page.keyboard.type("go");
+  await page.keyboard.press("Space");
+  await page.keyboard.type("up");
+
+  await expect(page.getByTestId("results-view")).toBeVisible();
+  await expect(page.getByTestId("result-correct-words")).toHaveText("2");
+  await expect(page.getByTestId("result-accuracy")).toHaveText("100%");
+});
