@@ -69,6 +69,56 @@ public sealed class UserStatsAggregateRepositoryTests
     }
 
     [Fact]
+    public async Task GetByUserIdAsync_WhenAggregateDoesNotExist_ReturnsNull()
+    {
+        await using var context = CreateContext();
+        var repository = new UserStatsAggregateRepository(context);
+
+        var aggregate = await repository.GetByUserIdAsync(Guid.NewGuid());
+
+        aggregate.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpsertAsync_WhenAggregateDoesNotExist_InsertsNewRow()
+    {
+        var userId = Guid.NewGuid();
+
+        await using (var seedContext = CreateContext())
+        {
+            seedContext.Users.Add(new User
+            {
+                Id = userId,
+                Username = "new-aggregate-user",
+                Email = "new-aggregate@test.com",
+                PasswordHash = "hash",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using (var context = CreateContext())
+        {
+            var repository = new UserStatsAggregateRepository(context);
+            await repository.UpsertAsync(CreateAggregate(userId, 1, 55m, 66m, 92m, 94m));
+        }
+
+        await using var assertContext = CreateContext();
+        var aggregate = await assertContext.UserStatsAggregates.SingleAsync(x => x.UserId == userId);
+
+        aggregate.GamesCount.Should().Be(1);
+        aggregate.HighestWordsPerMinute.Should().Be(55m);
+        aggregate.AverageWordsPerMinute.Should().Be(55m);
+        aggregate.HighestRawWordsPerMinute.Should().Be(66m);
+        aggregate.AverageRawWordsPerMinute.Should().Be(66m);
+        aggregate.HighestAccuracy.Should().Be(92m);
+        aggregate.AverageAccuracy.Should().Be(92m);
+        aggregate.HighestConsistency.Should().Be(94m);
+        aggregate.AverageConsistency.Should().Be(94m);
+    }
+
+    [Fact]
     public async Task GetByUserIdAsync_WhenAggregateExists_ReturnsTrackedEntityForReadModifyUpsertFlow()
     {
         var userId = Guid.NewGuid();

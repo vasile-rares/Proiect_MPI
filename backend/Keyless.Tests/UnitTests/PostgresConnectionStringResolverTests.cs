@@ -8,6 +8,25 @@ namespace Keyless.Tests.UnitTests;
 public sealed class PostgresConnectionStringResolverTests
 {
   [Fact]
+  public void Resolve_WhenConnectionStringIsWhitespace_ThrowsInvalidOperationException()
+  {
+    var action = () => PostgresConnectionStringResolver.Resolve("   ");
+
+    action.Should().Throw<InvalidOperationException>()
+      .WithMessage("Connection string 'DefaultConnection' was not found.");
+  }
+
+  [Fact]
+  public void Resolve_WhenConnectionStringIsAlreadyInNpgsqlFormat_ReturnsItUnchanged()
+  {
+    const string connectionString = "Host=localhost;Port=5432;Database=keyless;Username=postgres;Password=postgres";
+
+    var resolvedConnectionString = PostgresConnectionStringResolver.Resolve(connectionString);
+
+    resolvedConnectionString.Should().Be(connectionString);
+  }
+
+  [Fact]
   public void Resolve_WhenUriContainsTrustServerCertificate_MapsSupportedQueryParameters()
   {
     const string connectionString = "postgres://user:pass@localhost:5432/keyless?sslmode=Require&trust_server_certificate=true&pooling=false&minpoolsize=2&maxpoolsize=8";
@@ -46,5 +65,20 @@ public sealed class PostgresConnectionStringResolverTests
     builder.Pooling.Should().Be(defaults.Pooling);
     builder.MinPoolSize.Should().Be(defaults.MinPoolSize);
     builder.MaxPoolSize.Should().Be(defaults.MaxPoolSize);
+  }
+
+  [Fact]
+  public void Resolve_WhenUriContainsEncodedCredentialsAndDefaultPort_UsesDecodedValues()
+  {
+    const string connectionString = "postgres://user%20name:pa%24%24@localhost/keyless-db";
+
+    var resolvedConnectionString = PostgresConnectionStringResolver.Resolve(connectionString);
+    var builder = new NpgsqlConnectionStringBuilder(resolvedConnectionString);
+
+    builder.Host.Should().Be("localhost");
+    builder.Port.Should().Be(5432);
+    builder.Database.Should().Be("keyless-db");
+    builder.Username.Should().Be("user name");
+    builder.Password.Should().Be("pa$$");
   }
 }
