@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Keyless.API\Keyless.API.csproj" />
     <ProjectReference Include="..\Keyless.Application\Keyless.Application.csproj" />
     <ProjectReference Include="..\Keyless.Domain\Keyless.Domain.csproj" />
     <ProjectReference Include="..\Keyless.Infrastructure\Keyless.Infrastructure.csproj" />

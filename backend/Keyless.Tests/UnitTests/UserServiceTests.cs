@@ -12,6 +12,110 @@ public class UserServiceTests
     private readonly InMemoryUserRepository _repo = new();
 
     [Fact]
+    public async Task AddAsync_PersistsUserInRepository()
+    {
+        var service = new UserService(_repo);
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "added-user",
+            Email = "added@test.com",
+            PasswordHash = "hash",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await service.AddAsync(user);
+
+        var stored = await _repo.GetByIdAsync(user.Id);
+        stored.Should().BeSameAs(user);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WhenUserExists_MapsResponseDto()
+    {
+        var service = new UserService(_repo);
+        var userId = Guid.NewGuid();
+        await _repo.AddAsync(new User
+        {
+            Id = userId,
+            Username = "mapped-user",
+            Email = "mapped@test.com",
+            PasswordHash = "hash",
+            CreatedAt = DateTime.UtcNow,
+            TestsStarted = 12,
+            TestsCompleted = 10,
+            Biography = "mapped bio"
+        });
+
+        var result = await service.GetByIdAsync(userId);
+
+        result.Should().NotBeNull();
+        result!.Username.Should().Be("mapped-user");
+        result.Email.Should().Be("mapped@test.com");
+        result.TestsStarted.Should().Be(12);
+        result.TestsCompleted.Should().Be(10);
+        result.Biography.Should().Be("mapped bio");
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WhenUserMissing_ReturnsNull()
+    {
+        var service = new UserService(_repo);
+
+        var result = await service.GetByIdAsync(Guid.NewGuid());
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetByUsernameAsync_ReturnsMatchingUser()
+    {
+        var service = new UserService(_repo);
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "lookup-user",
+            Email = "lookup@test.com",
+            PasswordHash = "hash",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _repo.AddAsync(user);
+
+        var result = await service.GetByUsernameAsync("lookup-user");
+
+        result.Should().BeSameAs(user);
+    }
+
+    [Fact]
+    public async Task GetByEmailAsync_ReturnsMatchingUser()
+    {
+        var service = new UserService(_repo);
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "email-user",
+            Email = "email@test.com",
+            PasswordHash = "hash",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _repo.AddAsync(user);
+
+        var result = await service.GetByEmailAsync("email@test.com");
+
+        result.Should().BeSameAs(user);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ReturnsFalse_WhenUserNotFound()
+    {
+        var service = new UserService(_repo);
+
+        var result = await service.DeleteAsync(Guid.NewGuid());
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task UpdateAsync_ReturnsFalse_WhenUserNotFound()
     {
         var service = new UserService(_repo);
