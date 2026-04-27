@@ -9,7 +9,7 @@ In the project directory, you can run:
 ### `npm start`
 
 Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Open [http://localhost:5173](http://localhost:5173) to view it in your browser.
 
 The page will reload when you make changes.\
 You may also see any lint errors in the console.
@@ -22,7 +22,7 @@ See the section about [running tests](https://facebook.github.io/create-react-ap
 ### `npm run e2e`
 
 Runs the initial Playwright end-to-end suite against the local React app and the .NET API.
-The runner starts the frontend on `http://localhost:3000`, starts the API on `http://localhost:5232`, and uses a dedicated SQLite database file named `MonkeyType.E2E.db`.
+The runner starts the frontend on `http://localhost:5173`, starts the API on `http://localhost:5232`, and uses a dedicated SQLite database file named `MonkeyType.E2E.db`.
 
 Before the first run, install the browser dependency with:
 

@@ -8,7 +8,11 @@ const {
   getToken,
 } = require("./helpers");
 
-test("saved run appears in leaderboard for the logged in user", async ({ page, request, baseURL }) => {
+test("saved run appears in leaderboard for the logged in user", async ({
+  page,
+  request,
+  baseURL,
+}) => {
   const credentials = createCredentials();
 
   await registerUser(request, credentials);
@@ -21,17 +25,25 @@ test("saved run appears in leaderboard for the logged in user", async ({ page, r
   await page.getByTestId("leaderboard-duration-15").click();
   await expect(page.getByTestId("leaderboard-table")).toBeVisible();
   await expect(page.getByTestId("leaderboard-my-row")).toBeVisible();
-  await expect(page.getByTestId("leaderboard-my-username")).toHaveText(credentials.username);
+  await expect(page.getByTestId("leaderboard-my-username")).toHaveText(
+    credentials.username,
+  );
   await expect(page.getByTestId("leaderboard-my-duration")).toHaveText("15s");
 
-  const myWpm = Number(await page.getByTestId("leaderboard-my-wpm").textContent());
+  const myWpm = Number(
+    await page.getByTestId("leaderboard-my-wpm").textContent(),
+  );
   expect(myWpm).toBeGreaterThan(0);
 });
 
-test("logout removes access to protected routes", async ({ page, request, baseURL }) => {
+test("logout removes access to protected routes", async ({
+  page,
+  request,
+  baseURL,
+}) => {
   const credentials = createCredentials();
 
-  await page.goto((baseURL || "http://localhost:3000") + "/history");
+  await page.goto((baseURL || "http://localhost:5173") + "/history");
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId("login-form")).toBeVisible();
 
@@ -46,10 +58,12 @@ test("logout removes access to protected routes", async ({ page, request, baseUR
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId("login-form")).toBeVisible();
 
-  const tokenAfterLogout = await page.evaluate(() => window.localStorage.getItem("token"));
+  const tokenAfterLogout = await page.evaluate(() =>
+    window.localStorage.getItem("token"),
+  );
   expect(tokenAfterLogout).toBeNull();
 
-  await page.goto((baseURL || "http://localhost:3000") + "/profile");
+  await page.goto((baseURL || "http://localhost:5173") + "/profile");
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId("login-form")).toBeVisible();
 });

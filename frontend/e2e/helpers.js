@@ -1,6 +1,7 @@
 const { expect } = require("@playwright/test");
 
-const API_BASE_URL = process.env.PLAYWRIGHT_API_BASE_URL || "http://localhost:5232";
+const API_BASE_URL =
+  process.env.PLAYWRIGHT_API_BASE_URL || "http://localhost:5232";
 const TEST_PASSWORD = "Keyless!123";
 
 function createCredentials() {
@@ -20,25 +21,31 @@ function decodeJwt(token) {
 }
 
 async function registerUser(request, credentials) {
-  const registerResponse = await request.post(`${API_BASE_URL}/api/Authentication/register`, {
-    data: credentials,
-  });
+  const registerResponse = await request.post(
+    `${API_BASE_URL}/api/Authentication/register`,
+    {
+      data: credentials,
+    },
+  );
 
   expect(registerResponse.ok(), await registerResponse.text()).toBeTruthy();
 }
 
 async function enableDeterministicGame(page, overrides = {}) {
-  await page.addInitScript((config) => {
-    window.__KEYLESS_E2E__ = config;
-  }, {
-    words: ["focus", "speed", "rhythm", "flow"],
-    timerTickMs: 20,
-    ...overrides,
-  });
+  await page.addInitScript(
+    (config) => {
+      window.__KEYLESS_E2E__ = config;
+    },
+    {
+      words: ["focus", "speed", "rhythm", "flow"],
+      timerTickMs: 20,
+      ...overrides,
+    },
+  );
 }
 
 async function loginThroughUi(page, baseURL, credentials) {
-  await page.goto(baseURL || "http://localhost:3000");
+  await page.goto(baseURL || "http://localhost:5173");
   await page.getByTestId("login-username").fill(credentials.username);
   await page.getByTestId("login-password").fill(credentials.password);
   await page.getByTestId("login-submit").click();
@@ -57,7 +64,9 @@ async function completeTypingRun(page, duration = 15) {
     }
 
     const activeWord = await page.evaluate(() => {
-      const activeWordElement = document.querySelector('[data-testid="active-word"]');
+      const activeWordElement = document.querySelector(
+        '[data-testid="active-word"]',
+      );
       return activeWordElement?.textContent?.trim() || null;
     });
 
@@ -89,7 +98,7 @@ async function fetchUserStats(request, token) {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 
   expect(statsResponse.ok()).toBeTruthy();
@@ -98,11 +107,14 @@ async function fetchUserStats(request, token) {
 
 async function fetchUserProfile(request, token) {
   const payload = decodeJwt(token);
-  const profileResponse = await request.get(`${API_BASE_URL}/api/User/${payload.sub}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+  const profileResponse = await request.get(
+    `${API_BASE_URL}/api/User/${payload.sub}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     },
-  });
+  );
 
   expect(profileResponse.ok()).toBeTruthy();
   return profileResponse.json();
