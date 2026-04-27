@@ -118,18 +118,45 @@ Note: repository contains other helper files such as Dockerfile (backend), Rende
 Prerequisites:
 - Node.js (v20.x recommended)
 - .NET 10 SDK
-- PostgreSQL (or a local dev DB)
-- Docker (optional)
+- Docker (for the local PostgreSQL database)
 
-Run backend locally:
+### 1. Configure environment
+
+Copy `.env.example` to `.env` and generate a JWT key:
+
+```bash
+cp .env.example .env
+```
+
+Then open `.env` and replace `JWT_KEY` with a random secret of at least 32 characters, for example:
+
+```bash
+# Linux / macOS
+openssl rand -base64 48
+
+# Windows PowerShell
+[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
+```
+
+### 2. Start the database
+
+```bash
+docker compose up -d postgres
+```
+
+> **Windows + WSL note:** `appsettings.Development.json` uses `Host=127.0.0.1` instead of `localhost` to avoid WSL's IPv6 relay intercepting the connection on port 55432.
+
+### 3. Run the backend
+
 ```bash
 cd backend
 dotnet restore
-dotnet build
 dotnet run --project Keyless.API
 ```
 
-Run frontend locally:
+Backend default: http://localhost:5232
+
+### 4. Run the frontend
 
 ```bash
 cd frontend
@@ -137,7 +164,7 @@ npm install
 npm run dev
 ```
 
-Frontend default: http://localhost:3000
+Frontend default: http://localhost:5173
 
 ## Scripts (quick)
 
