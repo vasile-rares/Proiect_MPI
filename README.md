@@ -167,3 +167,9 @@ Environment variables and secrets (JWT key, DB connection) are set via Render.
 - Open PRs with clear descriptions and tests.
 - Run unit and e2e tests before submitting.
 
+## Our team
+
+- Stancu Nicol
+- Stoica Denisa
+- Tatu Denis
+- Vasile Rareș
