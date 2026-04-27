@@ -28,25 +28,26 @@ public sealed class StatisticsGameControllerTests
     }
 
     [Fact]
-    public async Task GetStatisticsByUser_WhenNoItemsExist_ReturnsNotFound()
+    public async Task GetStatisticsByUser_WhenNoItemsExist_ReturnsOkWithEmptyResult()
     {
         var userId = Guid.NewGuid();
+        var expected = new PagedResult<StatisticsGameResponseDTO>
+        {
+            Items = [],
+            PageNumber = 1,
+            PageSize = 10,
+            TotalCount = 0
+        };
         var statisticsService = new StubStatisticsGameService
         {
-            PagedByUserResult = new PagedResult<StatisticsGameResponseDTO>
-            {
-                Items = [],
-                PageNumber = 1,
-                PageSize = 10,
-                TotalCount = 0
-            }
+            PagedByUserResult = expected
         };
         var controller = CreateController(statisticsService, userId);
 
         var result = await controller.GetStatisticsByUser(userId, new PaginationRequestDTO { PageNumber = 1, PageSize = 10 });
 
-        result.Should().BeOfType<NotFoundObjectResult>()
-            .Which.Value.Should().Be("Statistics not found.");
+        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
+        ok.Value.Should().BeSameAs(expected);
     }
 
     [Fact]
@@ -221,19 +222,19 @@ public sealed class StatisticsGameControllerTests
     }
 
     [Fact]
-    public async Task GetAverageStatisticsByUser_WhenAggregateDoesNotExist_ReturnsNotFound()
+    public async Task GetAverageStatisticsByUser_WhenAggregateDoesNotExist_ReturnsOkWithEmptyResponse()
     {
         var userId = Guid.NewGuid();
         var controller = CreateController(new StubStatisticsGameService(), userId);
 
         var result = await controller.GetAverageStatisticsByUser(userId);
 
-        result.Should().BeOfType<NotFoundObjectResult>()
-            .Which.Value.Should().Be("Statistics not found.");
+        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
+        ok.Value.Should().BeEquivalentTo(new UserStatsAggregateResponseDTO { UserId = userId });
     }
 
     [Fact]
-    public async Task GetAverageStatisticsByUser_WhenGamesCountIsZero_ReturnsNotFound()
+    public async Task GetAverageStatisticsByUser_WhenGamesCountIsZero_ReturnsOkWithEmptyResponse()
     {
         var userId = Guid.NewGuid();
         var controller = CreateController(new StubStatisticsGameService
@@ -243,8 +244,8 @@ public sealed class StatisticsGameControllerTests
 
         var result = await controller.GetAverageStatisticsByUser(userId);
 
-        result.Should().BeOfType<NotFoundObjectResult>()
-            .Which.Value.Should().Be("Statistics not found.");
+        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
+        ok.Value.Should().BeEquivalentTo(new UserStatsAggregateResponseDTO { UserId = userId });
     }
 
     [Fact]

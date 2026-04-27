@@ -13,7 +13,7 @@ module.exports = defineConfig({
     ["html", { open: "never", outputFolder: "playwright-report" }],
   ],
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:5173",
     trace: "retain-on-failure",
     video: "retain-on-failure",
     screenshot: "only-on-failure",
@@ -27,7 +27,7 @@ module.exports = defineConfig({
     },
     {
       command: "npm start",
-      url: "http://localhost:3000",
+      url: "http://localhost:5173",
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
       env: {

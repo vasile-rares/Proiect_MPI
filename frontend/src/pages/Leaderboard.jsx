@@ -132,7 +132,7 @@ export default function Leaderboard() {
                 >
                   {item.userId === myUserId
                     ? myUsername || "you"
-                    : `player ${index + 1}`}
+                    : item.username || `player ${index + 1}`}
                 </td>
                 <td
                   className="wpm-cell"

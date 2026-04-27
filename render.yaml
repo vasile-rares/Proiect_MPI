@@ -15,7 +15,7 @@ services:
       rootDir: frontend
       buildCommand: npm ci && npm run build
       staticPublishPath: dist
-      autoDeployTrigger: off
+      autoDeployTrigger: commit
 
       routes:
           - type: rewrite
@@ -41,7 +41,7 @@ services:
       dockerfilePath: Dockerfile
       dockerContext: .
       healthCheckPath: /health
-      autoDeployTrigger: off
+      autoDeployTrigger: commit
 
       envVars:
           - key: ConnectionStrings__DefaultConnection

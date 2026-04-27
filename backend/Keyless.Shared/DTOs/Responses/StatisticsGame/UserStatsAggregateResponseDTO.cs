@@ -33,6 +33,6 @@ namespace Keyless.Shared.DTOs.Responses.StatisticsGame
         [Range(0, double.MaxValue)]
         public decimal AverageConsistency { get; set; }
 
-        public DateTime UpdatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 }

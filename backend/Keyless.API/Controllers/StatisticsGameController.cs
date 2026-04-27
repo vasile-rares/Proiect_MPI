@@ -32,11 +32,6 @@ namespace Keyless.API.Controllers
             }
 
             var statistics = await _statisticsGameService.GetByUserIdPagedAsync(id, pagination.PageNumber, pagination.PageSize);
-            if (statistics.Items == null || !statistics.Items.Any())
-            {
-                return NotFound("Statistics not found.");
-            }
-
             return Ok(statistics);
         }
 
@@ -99,7 +94,7 @@ namespace Keyless.API.Controllers
             var aggregate = await _statisticsGameService.GetAggregateByUserIdAsync(id);
             if (aggregate == null || aggregate.GamesCount == 0)
             {
-                return NotFound("Statistics not found.");
+                return Ok(new UserStatsAggregateResponseDTO { UserId = id });
             }
 
             var response = new UserStatsAggregateResponseDTO
